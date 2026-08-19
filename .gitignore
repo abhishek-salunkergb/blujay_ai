@@ -1,0 +1,35 @@
+# Environment & Secrets
+.env
+.env.local
+*.env
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Caches & Builds
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Database & Logs
+*.db
+*.sqlite3
+*.log
+
+# Temporary Media / Screenshots
+current_screen.png
+test_img.png
+test_leetcode.png
+*.tmp
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

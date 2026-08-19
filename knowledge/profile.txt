@@ -1,0 +1,27 @@
+```text
+Name:
+Abhishek
+
+Education:
+BTech Computer Engineering
+
+Programming:
+Python, Java, JavaScript
+
+Frameworks:
+Django, React
+
+Databases:
+MySQL, MongoDB
+
+AI/ML:
+Machine Learning, NLP, RAG, LLMs
+
+Cloud:
+AWS, Oracle Cloud
+
+Career Goal:
+Python Developer / AI Developer
+
+
+

@@ -1,0 +1,49 @@
+==================================================
+PROJECT: FARMER MARKETPLACE
+==================================================
+
+Description:
+A marketplace application connecting farmers and buyers.
+
+Technologies:
+React, Python, Django, MySQL
+
+Backend:
+I used Django and Python for the backend of the
+Farmer Marketplace.
+
+Database:
+I used MySQL for database-related functionality.
+
+Frontend:
+I used React for the frontend.
+
+Features:
+
+- Farmer registration
+- Buyer registration
+- Product listing
+- Crop pricing
+- Buyer-seller communication
+- Regional pricing
+- Bargaining
+- AI-based farming features
+
+My Contribution:
+I worked on the frontend and backend integration.
+
+I implemented product listing and user-related
+functionality using the project's backend.
+
+Django Usage:
+I used Django for the backend of the Farmer Marketplace,
+particularly for product listing and user-related
+functionality.
+
+Project Flow:
+React handles the frontend interface.
+Django and Python handle the backend logic.
+MySQL is used for database operations.
+The frontend communicates with the backend to
+perform application operations.
+```
