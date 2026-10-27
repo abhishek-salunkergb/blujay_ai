@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BluJay AI - Desktop & Web App</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="desktop-mode">
+
+  <!-- ===================================================================== -->
+  <!-- 1. DESKTOP APP WIDGET VIEW (Exact 1:1 Laptop Photo Layout)            -->
+  <!-- ===================================================================== -->
+  <div class="desktop-app-wrapper" id="desktop-app-container">
+    <div class="desktop-card-window">
+      
+      <!-- Top Header Bar -->
+      <header class="desktop-header pywebview-drag-region">
+        <div class="header-brand" onclick="switchAppTab('create')" title="BluJay AI">
+          <div class="mascot-emblem">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mascot-svg">
+              <rect width="24" height="24" rx="6" fill="#84cc16"/>
+              <circle cx="14.5" cy="8.5" r="2.2" fill="#ffffff"/>
+              <circle cx="15.2" cy="8.2" r="1" fill="#111827"/>
+              <path d="M16 11L21 12.5L16 14V11Z" fill="#f59e0b"/>
+              <path d="M7 11C7 7.5 9.5 5 13.5 5C17 5 18.5 7.5 18.5 11C16.5 15.5 13 17.5 7 17.5V11Z" fill="#4d7c0f"/>
+            </svg>
+          </div>
+          <span class="brand-title">BluJay</span>
+          <span class="brand-badge">AI</span>
+        </div>
+
+        <div class="header-actions">
+          <!-- Buy Credits Pill -->
+          <button class="btn-buy-credits" onclick="openModal('modal-credits')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-svg">
+              <circle cx="8" cy="8" r="6"/>
+              <path d="M18.09 10.37A6 6 0 1 1 10.34 18"/>
+              <path d="m7 6 2 2-2 2"/>
+            </svg>
+            Buy Credits
+          </button>
+
+          <!-- Minimize Window -->
+          <button class="icon-tool-btn" title="Minimize Window" onclick="minimizeToFloatingBubble()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-svg">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+
+          <!-- Expand to Full Web Dashboard / Collapse -->
+          <button class="icon-tool-btn" title="Toggle Full Dashboard / Widget" onclick="toggleAppExpansion()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-svg">
+              <polyline points="15 3 21 3 21 9"/>
+              <polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          </button>
+
+          <!-- Drag Handle -->
+          <button class="icon-tool-btn drag-handle pywebview-drag-region" title="Move Window">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-svg">
+              <polyline points="5 9 2 12 5 15"/>
+              <polyline points="9 5 12 2 15 5"/>
+              <polyline points="15 19 12 22 9 19"/>
+              <polyline points="19 9 22 12 19 15"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+          </button>
+
+          <!-- 3 Dots Options -->
+          <button class="icon-tool-btn" title="Profile Settings" onclick="openModal('modal-profile')">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="action-svg">
+              <circle cx="12" cy="5" r="1.75"/>
+              <circle cx="12" cy="12" r="1.75"/>
+              <circle cx="12" cy="19" r="1.75"/>
+            </svg>
+          </button>
+
+          <!-- Red Close Button -->
+          <button class="btn-red-close" title="Close" onclick="closeDesktopApp()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="close-svg">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Segmented Tabs Bar: [ Create ] | [ Call Sessions ] -->
+      <div class="segmented-tabs-wrapper">
+        <div class="segmented-tabs-container">
+          <button class="seg-tab-btn active" id="tab-create-btn" onclick="switchAppTab('create')">
+            Create
+          </button>
+          <button class="seg-tab-btn" id="tab-sessions-btn" onclick="switchAppTab('sessions')">
+            Call Sessions
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: CREATE VIEW -->
+      <div id="panel-create" class="desktop-panel active">
+        
+        <!-- Session Type -->
+        <div class="field-section">
+          <label class="field-label-row">
+            <span>Session Type <span class="info-mark" title="Interview copilot or casual call assistant">ⓘ</span></span>
+          </label>
+          <div class="type-pill-group">
+            <button class="type-pill active" id="type-opt-interview" onclick="selectTypeOption('interview')">
+              <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+                <path d="M9 22v-4h6v4"/>
+                <path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/>
+                <path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>
+              </svg>
+              Interview
+            </button>
+            <button class="type-pill" id="type-opt-regular" onclick="selectTypeOption('regular')">
+              <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              Regular Call
+            </button>
+          </div>
+        </div>
+
+        <!-- Target Role -->
+        <div class="field-section">
+          <label class="field-label-row">
+            <svg class="label-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>Target Role / Position <span class="info-mark" title="The specific job title you are interviewing for">ⓘ</span></span>
+          </label>
+          <input type="text" id="dt-input-role" class="dt-input" placeholder="e.g. Data Analyst, Senior Software Engineer..." value="Senior Software Engineer">
+        </div>
+
+        <!-- Company -->
+        <div class="field-section">
+          <div class="label-with-link">
+            <label class="field-label-row">
+              <svg class="label-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+                <path d="M9 22v-4h6v4"/>
+              </svg>
+              <span>Company <span class="info-mark" title="Target company for company-specific cultural alignment">ⓘ</span></span>
+            </label>
+            <button class="subtle-link-btn" onclick="fillFieldsFromURL()">
+              ✨ Fill fields from Job Post URL →
+            </button>
+          </div>
+          <input type="text" id="dt-input-company" class="dt-input" placeholder="e.g. Google, Target Tech, Acme..." value="">
+        </div>
+
+        <!-- Job Description -->
+        <div class="field-section">
+          <label class="field-label-row">
+            <svg class="label-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Job Description <span class="info-mark" title="Role requirements, keywords, or job description">ⓘ</span></span>
+          </label>
+          <textarea id="dt-input-jd" class="dt-textarea" rows="3" placeholder="Software Engineer versed in Python, SQL, and AWS...">Senior Software Engineer versed in Python, Distributed Systems, and Cloud Architecture.</textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+            <button id="btn-analyze-jd-fit" class="subtle-link-btn" style="color:#059669; font-weight:600;" onclick="triggerJDFitAnalysis()">
+              📊 Analyze Resume & Role Fit →
+            </button>
+          </div>
+          <div id="jd-fit-card" class="hidden" style="margin-top:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px 14px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#0F172A;">Role Alignment & Gap Analysis</strong>
+              <span id="jd-fit-badge" style="font-weight:700; padding:2px 8px; border-radius:12px; background:#ECFDF5; color:#065F46;">85% Match</span>
+            </div>
+            <div id="jd-fit-details" style="color:#475569; line-height:1.5;"></div>
+          </div>
+        </div>
+
+        <!-- Context -->
+        <div class="field-section">
+          <label class="section-micro-title">Context</label>
+          <div class="context-tags-row">
+            <button class="ctx-tag active-dark" id="tag-ctx-resume" onclick="triggerDocumentUpload()">
+              + Resume
+            </button>
+            <button class="ctx-tag" id="tag-ctx-documents" onclick="triggerDocumentUpload()">
+              + Documents
+            </button>
+            <button class="ctx-tag" id="tag-ctx-instructions" onclick="openInstructionsModal()">
+              + Instructions
+            </button>
+          </div>
+          <div class="active-file-strip">
+            📄 <span id="dt-resume-filename">Default Knowledge Base</span> <span class="rag-ready-tag" id="dt-resume-tag">(Default RAG Active)</span>
+          </div>
+        </div>
+
+        <!-- Output Settings -->
+        <div class="field-section">
+          <label class="section-micro-title">Output Settings</label>
+          <div class="output-row">
+            <div class="select-pill-wrapper dark">
+              <svg class="select-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <select id="dt-select-style">
+                <option value="Direct & Highly Technical" selected>Answer Preferences ⌄</option>
+                <option value="STAR Behavioral Framework">STAR Framework ⌄</option>
+                <option value="Executive & Concise">Executive & Concise ⌄</option>
+                <option value="ELI5 / Simple Concept">Simple / ELI5 ⌄</option>
+              </select>
+            </div>
+
+            <div class="select-pill-wrapper">
+              <span class="sparkle-symbol">✦</span>
+              <select id="dt-select-model">
+                <option value="gpt-4o-mini" selected>OpenAI GPT-4o Mini (Fast) ⌄</option>
+                <option value="gpt-4o">OpenAI GPT-4o (Flagship) ⌄</option>
+                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq) ⌄</option>
+                <option value="qwen/qwen3.6-27b">Qwen 3.6 27B ⌄</option>
+              </select>
+            </div>
+
+            <div class="select-pill-wrapper">
+              <svg class="select-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <select id="dt-select-language">
+                <option value="English" selected>English ⌄</option>
+                <option value="Spanish">Spanish ⌄</option>
+                <option value="French">French ⌄</option>
+                <option value="German">German ⌄</option>
+                <option value="Hindi">Hindi ⌄</option>
+              </select>
+            </div>
+
+            <div class="select-pill-wrapper">
+              <svg class="select-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+              <select id="dt-select-audio-source">
+                <option value="dual" selected>🎙️ Dual Loop (System + Mic) ⌄</option>
+                <option value="system">🔊 System Speaker Only ⌄</option>
+                <option value="mic">🎤 Microphone Only ⌄</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Behavior -->
+        <div class="field-section">
+          <label class="section-micro-title">Behavior</label>
+          <div class="behavior-row">
+            <label class="dt-checkbox-label">
+              <input type="checkbox" id="dt-check-auto-answer" checked>
+              <span class="dt-custom-box"></span>
+              <span class="dt-box-text">Auto Answer (Beta) <span class="info-mark" title="Generates answers automatically when interviewer pauses">ⓘ</span></span>
+            </label>
+
+            <label class="dt-checkbox-label">
+              <input type="checkbox" id="dt-check-save-transcript" checked>
+              <span class="dt-custom-box"></span>
+              <span class="dt-box-text">Save Transcript <span class="info-mark" title="Saves transcript and Q&A history locally">ⓘ</span></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Hero Action Button -->
+        <div class="hero-button-area">
+          <button id="btn-create-session-hero" class="btn-hero-create" onclick="executeCreateDesktopSession()">
+            Create Session
+          </button>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: CALL SESSIONS VIEW -->
+      <div id="panel-sessions" class="desktop-panel">
+        <div class="sessions-filter-row">
+          <div class="pill-filters">
+            <button class="filter-tab-pill active" id="df-all" onclick="filterDesktopSessions('all')">All</button>
+            <button class="filter-tab-pill" id="df-active" onclick="filterDesktopSessions('active')">Active</button>
+            <button class="filter-tab-pill" id="df-ended" onclick="filterDesktopSessions('ended')">Ended</button>
+          </div>
+          <span class="session-count-text" id="dt-session-counter">0 Sessions</span>
+        </div>
+
+        <div class="search-input-wrapper">
+          <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="dt-search-input" class="dt-search" placeholder="Search by title or description" oninput="searchDesktopSessions(this.value)">
+        </div>
+
+        <div id="dt-sessions-container" class="dt-sessions-list-scroll">
+          <!-- Populated or empty state dynamically rendered -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 2. FULL WEB DASHBOARD VIEW (Expanded Two-Column SaaS Layout)          -->
+  <!-- ===================================================================== -->
+  <div class="web-dashboard-wrapper" id="web-dashboard-container">
+    
+    <!-- Left Sidebar -->
+    <aside class="web-sidebar">
+      <div class="web-sidebar-brand">
+        <div class="brand-group" onclick="switchSidebarTab('callSessions')">
+          <div class="mascot-emblem">
+            <svg viewBox="0 0 32 32" fill="none" class="mascot-svg">
+              <rect width="32" height="32" rx="8" fill="#10B981"/>
+              <path d="M9 16C9 12.134 12.134 9 16 9C19.866 9 23 12.134 23 16C23 19.866 19.866 23 16 23C13.5 23 11 21 9 16Z" fill="#047857"/>
+              <circle cx="18" cy="14" r="2" fill="#FFFFFF"/>
+              <circle cx="18.5" cy="13.7" r="1" fill="#111827"/>
+              <path d="M21 15.5L25.5 17L21 18.5V15.5Z" fill="#F59E0B"/>
+            </svg>
+          </div>
+          <span class="brand-title">BluJay</span>
+          <span class="brand-badge">AI</span>
+        </div>
+        <button class="icon-tool-btn" title="Collapse to Compact Widget" onclick="toggleAppExpansion()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-svg">
+            <polyline points="4 14 10 14 10 20"/>
+            <polyline points="20 10 14 10 14 4"/>
+            <line x1="14" y1="10" x2="21" y2="3"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Workspace</div>
+        <nav class="nav-list">
+          <a href="javascript:void(0)" class="nav-link active" id="nav-callSessions" onclick="switchSidebarTab('callSessions')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+              <path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/>
+            </svg>
+            <span>Call Sessions</span>
+          </a>
+          <a href="javascript:void(0)" class="nav-link" id="nav-resumes" onclick="switchSidebarTab('resumes')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>CVs & Resumes</span>
+          </a>
+          <a href="javascript:void(0)" class="nav-link" id="nav-documents" onclick="switchSidebarTab('documents')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+              <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+            </svg>
+            <span>Documents</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Support</div>
+        <nav class="nav-list">
+          <a href="javascript:void(0)" class="nav-link" id="nav-gettingStarted" onclick="switchSidebarTab('gettingStarted')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            </svg>
+            <span>Getting Started</span>
+          </a>
+          <a href="javascript:void(0)" class="nav-link" id="nav-tutorials" onclick="switchSidebarTab('tutorials')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+              <polygon points="23 7 16 12 23 17 23 7"/><rect width="14" height="12" x="1" y="6" rx="2" ry="2"/>
+            </svg>
+            <span>Tutorials</span>
+          </a>
+          <a href="javascript:void(0)" class="nav-link" id="nav-supportChat" onclick="switchSidebarTab('supportChat')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+            </svg>
+            <span>Support Chat</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="free-plan-card">
+        <div class="plan-header">
+          <div class="gift-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" style="width: 16px; height: 16px;">
+              <rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/>
+              <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>
+            </svg>
+            <span class="plan-txt">Free Plan</span>
+          </div>
+        </div>
+        <p class="plan-sub">Start a 10 min free session or buy credits for full-length calls.</p>
+        <button class="btn-upgrade-dark" onclick="openModal('modal-credits')">Upgrade</button>
+      </div>
+
+      <div class="sidebar-user" onclick="openModal('modal-profile')">
+        <div class="avatar-circle" id="web-avatar">AS</div>
+        <div class="user-info">
+          <div class="name-line" id="web-user-name">Abhishek Salunke</div>
+          <div class="email-line" id="web-user-email">abhi958866@gmail.com</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Canvas -->
+    <main class="web-main">
+      <section id="view-callSessions" class="web-view active">
+        <div class="web-header-row">
+          <div>
+            <h1 class="web-h1">Call Sessions</h1>
+            <p class="web-sub">Prepare for calls and review past sessions.</p>
+          </div>
+          <button class="btn-create-session-green" onclick="toggleAppExpansion(); switchAppTab('create');">
+            + Create Session
+          </button>
+        </div>
+
+        <div class="web-filter-tabs">
+          <button class="w-tab active" onclick="filterSessions('all')">All</button>
+          <button class="w-tab" onclick="filterSessions('active')">Active</button>
+          <button class="w-tab" onclick="filterSessions('ended')">Ended</button>
+        </div>
+
+        <div id="web-sessions-container" class="web-sessions-area">
+          <!-- Sessions list -->
+        </div>
+      </section>
+
+      <section id="view-resumes" class="web-view">
+        <div class="web-header-row">
+          <div>
+            <h1 class="web-h1">CVs & Resumes</h1>
+            <p class="web-sub">Upload candidate resumes for instant RAG grounding.</p>
+          </div>
+          <button class="btn-create-session-green" onclick="triggerDocumentUpload()">Upload CV</button>
+        </div>
+        <div class="resume-dropzone" onclick="triggerDocumentUpload()">
+          <p>Drop your resume here, or <span style="color: #10B981; text-decoration: underline;">browse files</span> (PDF, DOCX, TXT)</p>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-credits" class="modal-overlay hidden" onclick="handleBackdropClick(event, 'modal-credits')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Buy Interview Credits</h3>
+        <button class="btn-x" onclick="closeModal('modal-credits')">✕</button>
+      </div>
+      <p class="modal-desc">Select a pack or unlock unlimited AI Copilot sessions.</p>
+      <div class="credits-pack-grid">
+        <div class="pack-box">
+          <h4>Standard Pack</h4>
+          <div class="pack-price">$15.00</div>
+          <p>100 Credits (~5 interviews)</p>
+          <button class="btn-buy-pack" onclick="choosePlan('100')">Select 100</button>
+        </div>
+        <div class="pack-box active-pack">
+          <span class="ribbon">RECOMMENDED</span>
+          <h4>Unlimited Pro</h4>
+          <div class="pack-price">$39.00/mo</div>
+          <p>Unlimited Live Interviews</p>
+          <button class="btn-buy-pack primary" onclick="choosePlan('unlimited')">Unlock Unlimited</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-profile" class="modal-overlay hidden" onclick="handleBackdropClick(event, 'modal-profile')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Candidate Persona & Settings</h3>
+        <button class="btn-x" onclick="closeModal('modal-profile')">✕</button>
+      </div>
+      <div class="modal-fields">
+        <label class="group-label">Candidate Name</label>
+        <input type="text" id="persona-name" class="dt-input" value="Abhishek Salunke">
+        <label class="group-label" style="margin-top: 10px;">Email Address</label>
+        <input type="text" id="persona-email" class="dt-input" value="abhi958866@gmail.com">
+        <label class="group-label" style="margin-top: 10px;">Verified Tech Stack</label>
+        <input type="text" id="persona-skills" class="dt-input" value="Python, FastAPI, React, PostgreSQL, Docker, RAG, LLMs">
+      </div>
+      <button class="btn-hero-create" style="margin-top: 16px;" onclick="savePersonaAndClose()">Save Persona</button>
+    </div>
+  </div>
+
+  <div id="home-toast" class="home-toast hidden"></div>
+
+  <script src="home.js"></script>
+</body>
+</html>

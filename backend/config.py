@@ -1,12 +1,17 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+DEFAULT_INSECURE_JWT_SECRET = "super-secret-copilot-production-key-change-in-env-9921"
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
+
     APP_NAME: str = "AI Copilot Authoritative Server"
-    ENV: str = "development"
+    ENV: str = os.getenv("ENV", "development")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./copilot_server.db")
-    JWT_SECRET: str = os.getenv("JWT_SECRET", "super-secret-copilot-production-key-change-in-env-9921")
+    JWT_SECRET: str = os.getenv("JWT_SECRET") or os.getenv("JWT_SECRET_KEY") or DEFAULT_INSECURE_JWT_SECRET
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days token
 
@@ -31,7 +36,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 90
 
     # Admin & VIP Free Accounts (Whitelisted for permanent free unlimited access)
-    ADMIN_EMAILS: str = os.getenv("ADMIN_EMAILS", "abhi958866@gmail.com,abhisheksalunke7387@gmail.com")
+    ADMIN_EMAILS: str = os.getenv("ADMIN_EMAILS", "")
+
+    # CORS Whitelist
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
 
     # Business Rules
     INITIAL_CREDIT_UNITS: int = 100        # 1 Credit = 2 x 30m sessions
@@ -39,9 +47,29 @@ class Settings(BaseSettings):
     SESSION_BLOCK_MINUTES: int = 30        # 30-minute block lease
     SESSION_LEASE_GRACE_MINUTES: int = 2   # 2 minutes heartbeat lease
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    @property
+    def cors_origins_list(self) -> list:
+        if not self.CORS_ORIGINS or self.CORS_ORIGINS.strip() == "*":
+            return ["*"]
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def admin_emails_list(self) -> list:
+        return [e.strip().lower() for e in self.ADMIN_EMAILS.split(",") if e.strip()]
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENV.strip().lower() in ("production", "prod")
+
+    def validate_production_security(self):
+        if self.is_production:
+            if not self.JWT_SECRET or self.JWT_SECRET == DEFAULT_INSECURE_JWT_SECRET:
+                raise ValueError(
+                    "CRITICAL SECURITY ERROR: JWT_SECRET must be explicitly set to a "
+                    "cryptographically secure random string in production environment."
+                )
 
 
 settings = Settings()
+settings.validate_production_security()
+

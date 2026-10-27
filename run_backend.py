@@ -10,9 +10,12 @@ import uvicorn
 from backend.main import app
 
 if __name__ == "__main__":
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", 8000))
     print("===================================================================")
     print("🚀 Starting AI Copilot Authoritative Billing & Session Backend...")
-    print("📍 URL: http://127.0.0.1:8000")
-    print("📚 OpenAPI Docs: http://127.0.0.1:8000/docs")
+    print(f"📍 URL: http://{host}:{port}")
+    print(f"📚 OpenAPI Docs: http://{host}:{port}/docs")
+    print(f"🖥️ Web Dashboard: http://{host}:{port}/dashboard")
     print("===================================================================")
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=False, log_level="info")
+    uvicorn.run("backend.main:app", host=host, port=port, reload=False, log_level="info")

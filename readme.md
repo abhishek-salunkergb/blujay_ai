@@ -1,1183 +1,312 @@
-
-
-Pasted code.py
-Python
-there are many indentation error write the whole main.py clearly
-
-Yes, bro. This output shows the same problem clearly.
-
-The first half is a good answer to “What is Django?”. But the section:
-
-“Why I chose Django for my project”
-
-contains unsupported personal claims such as registration, login, profile management, authentication system usage, product models, RESTful endpoints, and form validation.
-
-Those aren't currently confirmed by the facts you gave me.
-
-What this tells us
-Your system is currently doing this:
-
-Question: What is Django?
-        ↓
-General Django knowledge
-        ↓
-Correct technical explanation
-        ↓
-Then it sees Farmer Marketplace context
-        ↓
-It tries to connect Django to the project
-        ↓
-It invents implementation details
-For “What is Django?”, it should not automatically add a long project-specific section.
-
-It should answer Django generally, and only add your project experience if the question asks for it or if a very brief connection is genuinely useful.
-
-So our next instruction should be
-Add this rule to your system_prompt, preferably under TECHNICAL QUESTIONS:
-
-IMPORTANT TECHNICAL QUESTION RULE:
-
-When the interviewer asks a general technical question such as:
-
-"What is Django?"
-"What is React?"
-"What is MySQL?"
-"What is RAG?"
-
-Answer the technical question using general technical
-knowledge.
-
-Do NOT automatically create a "Why I chose it", "How I used it",
-or project-specific section unless the question specifically
-asks about the candidate's project or experience.
-
-If you mention the candidate's project, only use facts explicitly
-confirmed in CANDIDATE INFORMATION.
-
-Never invent project implementation details just to connect a
-general technical explanation to the candidate's project.
-
-For example, if the question is:
-
-"What is Django?"
-
-Do not automatically say:
-
-"I used Django for authentication..."
-"I used Django ORM..."
-"I created REST APIs..."
-"I used Django admin..."
-
-unless those exact experiences are confirmed.
-
-Instead, explain Django as a technical concept.
-
-If the question is:
-
-"How did you use Django in your Farmer Marketplace?"
-
-then use the confirmed candidate information and answer in
-first person.
-This gives us the behavior we actually want
-Question:
-
-What is Django?
-
-➡️ General Django explanation.
-
-Question:
-
-How did you use Django?
-
-➡️ Your confirmed Django experience.
-
-Question:
-
-Why did you choose Django?
-
-➡️ Only your confirmed reason for choosing Django. If you haven't provided that reason, it must say it doesn't have that information.
-
-Question:
-
-Explain your Farmer Marketplace.
-
-➡️ Project information + your confirmed role.
-
-This is the distinction we were missing. Don't change the model. Don't rewrite the whole ask_ai() yet. Add this rule, test these four questions, and then we'll move to the next instruction.
-
-
-Answer**
-
-RAG stands for Retrieval‑Augmented Generation, a pattern that combines a large language model (LLM) with an external information‑retrieval component. The core idea is to let the generative model “look up” relevant facts or documents at inference time, rather than relying solely on the knowledge that was baked into its parameters during pre‑training. This approach helps mitigate two common limitations of pure LLMs: (1) outdated or incomplete knowledge, and (2) the tendency to hallucinate details that aren’t supported by any source.
-
-How it works
-
-Query formulation – When a user asks a question or provides a prompt, the system first extracts a concise query that captures the information need.
-Retrieval – That query is sent to a search engine or vector‑based similarity store (e.g., Elasticsearch, FAISS, or a dense passage retriever). The retrieval module returns a set of top‑k documents or passages that are most relevant.
-Context construction – The retrieved snippets are concatenated with the original prompt, often with a short instruction reminding the model to ground its answer in the provided sources.
-Generation – The combined input is fed to the LLM, which produces a response that explicitly incorporates the retrieved content. Some implementations also use a post‑processing step to cite sources or verify consistency.
-Why it’s useful
-
-Up‑to‑date knowledge – Because the retrieval component can query a live knowledge base, the system can answer questions about recent events or domain‑specific data that the LLM never saw during training.
-Improved factual accuracy – By grounding the generation in concrete documents, the likelihood of hallucinations drops dramatically, which is crucial for applications like medical advice, legal assistance, or customer support.
-Scalability – You can keep the LLM fixed while simply expanding or updating the underlying corpus, avoiding costly re‑training.
-Typical use cases
-
-Open‑domain question answering where the answer must be supported by citations.
-Enterprise knowledge‑base assistants that pull internal documents, manuals, or policy files to help employees.
-Chatbots for product support that need to reference up‑to‑date specifications or troubleshooting guides.
-My experience
-
-In my AI/ML background I have worked with Retrieval‑Augmented Generation concepts, especially in the context of natural‑language processing and large language models. I understand how to set up the retrieval pipeline, choose appropriate vector encoders, and design prompts that encourage the model to cite the retrieved material. This knowledge allows me to build systems that combine the expressive power of LLMs with the precision of a searchable knowledge source, delivering answers that are both fluent and trustworthy.
-
-
-Yes, bro. This output exposes another specific issue.
-
-The general explanation of RAG is fine, but the last section says:
-
-“In my AI/ML background I have worked with Retrieval-Augmented Generation concepts…”
-
-and then claims:
-
-you set up retrieval pipelines
-
-chose vector encoders
-
-designed prompts
-
-built systems
-
-used citations
-
-Those are not confirmed by the candidate information you gave me.
-
-You have only confirmed:
-
-AI/ML:
-Machine Learning, NLP, RAG, LLMs
-That means the model can say you have RAG knowledge, but it cannot invent specific RAG implementation experience.
-
-Add this rule to the prompt
-Put this immediately after the technical-question rule we added:
-
-IMPORTANT GENERAL KNOWLEDGE VS EXPERIENCE RULE:
-
-A technology appearing in the candidate's Skills or AI/ML
-section means that the candidate has listed knowledge or
-familiarity with that technology.
-
-It does NOT automatically mean that the candidate has
-implemented every feature, architecture, algorithm, tool,
-library, or technique associated with that technology.
-
-For example:
-
-If the candidate information says:
-
-AI/ML:
-Machine Learning, NLP, RAG, LLMs
-
-You may say:
-
-"I have knowledge of RAG and understand how retrieval and
-generation work together."
-
-You MUST NOT automatically say:
-
-"I built a RAG pipeline."
-"I used FAISS."
-"I created vector embeddings."
-"I implemented semantic search."
-"I designed a retrieval system."
-
-unless those specific experiences are explicitly confirmed.
-
-When answering a general technical question, explain the
-technology normally using general technical knowledge.
-
-When describing the candidate's experience, use ONLY the
-specific experience confirmed in the candidate information.
-Then your RAG answer should behave like this
-For:
-
-What is RAG?
-
-The AI can give you a detailed technical answer:
-
-RAG stands for Retrieval-Augmented Generation. It is a technique that combines information retrieval with a large language model. Instead of relying only on the knowledge stored in the model, the system first retrieves relevant information from an external knowledge source and provides that information to the model as context. The model then uses that context to generate the answer. A typical RAG pipeline consists of retrieving relevant documents, adding them to the prompt, and generating a response based on that context. RAG is useful when an application needs to work with domain-specific or frequently changing information. I have knowledge of RAG as part of my AI/ML background, and I understand its role in combining retrieval with LLM-based generation.
-
-That last sentence is supported by your information.
-
-But it should not suddenly claim:
-
-"I built a FAISS vector database..."
-
-unless you actually add that to your knowledge file.
-
-So we now have 3 separate rules
-1. General technical question
-
-What is Django?
-
-→ Explain Django. Don't invent project experience.
-
-2. Technology + candidate experience
-
-How did you use Django?
-
-→ Use confirmed Django/project facts and speak in first person.
-
-3. Technology listed as a skill
-
-What is RAG?
-
-→ Explain RAG technically. You can say you have knowledge of RAG, but don't invent implementation experience.
-
-This is the behavior we want. We don't need to change the model. We need to keep tightening the distinction between knowledge, confirmed experience, and general technical knowledge.
-
-
-before going to next can you make readme.md 
-
-Done, bro. I created the README.md based on the architecture and rules we've established so far.
-
-
-It covers the current structure, RAG flow, candidate-fact rules, AI answer behavior, technologies, setup, and future development. 
-
-
-okay so i 
-
-AI Interview Assistant
-An AI-powered interview practice assistant that listens to interview
-questions, converts speech to text, retrieves relevant candidate
-information, and generates natural interview-style answers.
-
-Overview
-The project is designed to help a candidate practice answering
-technical, project, coding, HR, and follow-up interview questions.
-
-The system combines:
-
-Speech-to-text
-
-Retrieval-Augmented Generation (RAG)
-
-Candidate knowledge files
-
-LLM-based answer generation
-
-Conversation history
-
-A Tkinter desktop interface
-
-Groq API
-
-Current Architecture
-Interviewer / User
-       |
-       v
-Audio or Typed Question
-       |
-       v
-Speech-to-Text
-(Whisper)
-       |
-       v
-Question Text
-       |
-       v
-RAG / Knowledge Retrieval
-       |
-       v
-Relevant Candidate Information
-       |
-       v
-LLM
-       |
-       v
-Interview-Style Answer
-       |
-       v
-Tkinter UI
-Main Components
-1. main.py
-The main application controller.
-
-Responsibilities:
-
-Load environment variables
-
-Initialize the Groq client
-
-Maintain conversation history
-
-Process typed questions
-
-Process speech questions
-
-Retrieve candidate information
-
-Send prompts to the LLM
-
-Stream generated answers to the UI
-
-2. ui.py
-Contains the Tkinter user interface.
-
-The interface includes:
-
-Application title
-
-Status indicator
-
-Question display
-
-AI answer display
-
-Voice input
-
-Typed question input
-
-3. speech.py
-Responsible for speech processing.
-
-The current system uses speech-to-text to convert recorded audio into
-text before sending the question to the LLM.
-
-4. audio.py
-Responsible for computer/system audio recording.
-
-The project is being developed to support capturing audio from the
-computer so that spoken interview questions can be converted into text.
-
-5. rag.py
-Responsible for retrieving relevant information from the candidate's
-knowledge files.
-
-The current implementation uses:
-
-TF-IDF
-
-Cosine similarity
-
-Text chunks
-
-Top-k retrieval
-
-The retrieved information is passed to the LLM as candidate context.
-
-6. knowledge/
-Contains candidate-specific .txt files.
-
-Example information includes:
-
-Education
-
-Programming languages
-
-Frameworks
-
-Databases
-
-AI/ML knowledge
-
-Cloud knowledge
-
-Projects
-
-Confirmed project contributions
-
-The knowledge files are treated as the source of truth for
-candidate-specific claims.
-
-Candidate Knowledge Rules
-A core design principle of this project is:
-
-The AI must never invent candidate experience.
-
-The model may explain general technical concepts using its general
-knowledge, but candidate-specific claims must be supported by the
-candidate knowledge.
-
-For example, if the knowledge says:
-
-I used Django for the backend of the Farmer Marketplace,
-particularly for product listing and user-related functionality.
-The assistant may explain that experience naturally.
-
-However, it should not automatically claim that the candidate:
-
-Used Django ORM
-
-Built REST APIs
-
-Implemented JWT authentication
-
-Used Django Admin
-
-Implemented permissions
-
-Used a specific Django package
-
-unless those facts are explicitly added to the candidate knowledge.
-
-Knowledge vs Experience
-The system distinguishes between general technical knowledge and
-confirmed experience.
-
-For example:
-
-AI/ML:
-Machine Learning, NLP, RAG, LLMs
-This confirms that these technologies are part of the candidate's stated
-knowledge.
-
-It does not automatically confirm that the candidate:
-
-Built a RAG pipeline
-
-Used FAISS
-
-Created embeddings
-
-Implemented vector search
-
-Built a production LLM application
-
-Those details must be explicitly confirmed before the assistant presents
-them as personal experience.
-
-Answer Types
-General Technical Questions
-Example:
-
-What is Django?
-The assistant should explain Django as a technical concept.
-
-It should not automatically create a project-specific explanation unless
-the question asks about the candidate's experience.
-
-Candidate Experience Questions
-Example:
-
-How did you use Django in the Farmer Marketplace?
-The assistant should answer in first person and use only confirmed
-project information.
-
-Project Questions
-Example:
-
-Explain your Farmer Marketplace project.
-The assistant should use confirmed information about:
-
-Project purpose
-
-Technologies
-
-Features
-
-Candidate contribution
-
-Missing information should not be invented.
-
-Why Questions
-Example:
-
-Why did you choose Django?
-The assistant should only provide a personal reason if that reason has
-been explicitly added to the candidate knowledge.
-
-If the reason is not known, the assistant should not invent one.
-
-Coding Questions
-The assistant should:
-
-Explain the approach.
-
-Provide clean code.
-
-Explain important parts.
-
-Include complexity when useful.
-
-HR / Behavioral Questions
-Answers should be:
-
-Natural
-
-Conversational
-
-Based on confirmed candidate information
-
-Free from invented achievements or experience
-
-Follow-up Questions
-The assistant uses conversation history to understand what the
-interviewer is referring to while still following the candidate-facts
-rule.
-
-Technologies
-Current project technologies include:
-
-Python
-
-Tkinter
-
-Groq API
-
-Whisper
-
-TF-IDF
-
-Cosine Similarity
-
-RAG
-
-LLMs
-
-React / Django / MySQL as technologies represented in candidate
-knowledge
-
-API Configuration
-Create a .env file in the project root:
-
-GROQ_API_KEY=your_groq_api_key
-Do not commit the .env file to Git.
-
-A .gitignore file should include:
-
-.env
-.venv/
-__pycache__/
-*.pyc
-Installation
-Create and activate a Python virtual environment:
-
+# ✦ BluJay AI — Live Interview Copilot & Smart Preparation Assistant
+
+<div align="center">
+
+![BluJay AI Banner](frontend/home.html)
+
+**A Stealth, Real-Time, Multi-Modal Desktop AI Copilot for Technical & Behavioral Interviews**
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
+[![Groq & Gemini](https://img.shields.io/badge/AI-Groq%20%7C%20Gemini%20%7C%20OpenAI-orange.svg)](https://groq.com/)
+[![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D6.svg)](https://www.microsoft.com/windows)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](#)
+
+</div>
+
+---
+
+## 📌 Overview
+
+**BluJay AI** is an advanced desktop interview copilot and practice platform designed to assist software engineers, system architects, and tech candidates during live interviews and preparation sessions.
+
+The system continuously transcribes both interviewer audio (system speaker loopback) and candidate speech (microphone), grounds context using the candidate's verified resume and job descriptions (RAG), captures screen coding challenges with multi-modal vision and hardware OCR, and streams structured, natural, personalized interview answers in real time.
+
+---
+
+## 🚀 Key Features & Capabilities
+
+### 🛡️ 1. Stealth Mode & Anti-Screenshare Protection
+* **OS-Level Capture Exclusion**: Utilizes Windows Win32 API `SetWindowDisplayAffinity(HWND, WDA_EXCLUDEFROMCAPTURE)` (`0x11`) to ensure all UI windows, popups, and HUD elements are completely invisible on screen shares (Zoom, Microsoft Teams, Google Meet, OBS, Discord, Webex).
+* **HWND Recreation Watcher**: Continuously monitors process window handles to instantly reapply capture exclusion whenever child frames, search boxes, or dialogs are recreated.
+
+### 🎙️ 2. High-Fidelity Dual-Stream Audio & STT Pipeline
+* **Dual-Channel Audio Capture**:
+  * **Interviewer Channel**: Low-latency WASAPI loopback (`soundcard`) capturing remote speaker voice directly from the soundcard.
+  * **Candidate Channel**: Local microphone stream (`sounddevice`).
+* **ML-Based Voice Activity Detection (Silero VAD)**: Runs ONNX-optimized Silero VAD on CPU (~1ms inference time) with WebRTC VAD fallback.
+* **DSP Audio Processing**: Spectral noise reduction (`noisereduce`), DC-offset filtering, and Automatic Gain Control (AGC).
+* **ASR Post-Processing**: Real-time phonetic and technical vocabulary correction dictionary (e.g., PostgreSQL, Kubernetes, FastAPI, PyTorch, O(N log N)).
+
+### 👁️ 3. Multi-Modal Vision & Coding Problem Solver
+* **Dual-Engine Vision**:
+  * **Google Gemini Multimodal Vision**: Pixel-level comprehension of complex diagrams, LeetCode / HackerRank problem descriptions, and IDE code blocks.
+  * **Windows Native OCR (`winocr`) + Groq LLMs**: Hardware-accelerated text extraction paired with Llama 3.3 70B / Qwen 2.5 27B.
+* **Multi-Monitor Support**: Native enumeration of all physical monitors with interactive snipping tool (`Ctrl + Shift + Enter`).
+* **Sandboxed Code Execution**: Local Python execution sandbox (`code_sandbox.py`) to run and verify code solutions against sample test cases in real-time.
+
+### 🧠 4. Personalized RAG & Grounded Intelligence
+* **Resume & JD Ingestion**: Supports `.pdf`, `.docx`, `.txt`, and `.md` candidate profiles.
+* **TF-IDF & Cosine Similarity Engine**: Retrieves relevant project experiences and skills based on the question context.
+* **Strict Hallucination Prevention**:
+  * Explains general technical concepts objectively.
+  * Answers candidate project questions strictly using verified candidate data in first-person voice (`"I built..."`). Never fabricates employment history or claims unverified implementations.
+
+### ⚡ 5. Frosted Glassmorphism HUD & Interactive Refinements
+* **Ultra-Compact Floating Capsule**: Draggable, minimal UI overlay with live audio visualizer waveforms.
+* **Live Subtitle Stream**: Real-time streaming transcription with speaker attribution.
+* **One-Click Answer Refinements**:
+  * `⚡ 30s Short`: Compressed, high-impact verbal responses under 60 words.
+  * `🎯 STAR Method`: Situation, Task, Action, Result structured storytelling.
+  * `🛠️ Deep Tech`: Comprehensive architectural trade-offs, scalability, and internal mechanics.
+  * `🏛️ Sys Design`: High-level system architecture, component breakdown, and database schemas.
+  * `🌟 STAR Story`: Candidate-specific story retrieval and matching.
+  * `📜 Teleprompter`: Paced verbal delivery assistant.
+  * `▶️ Run Code`: Instant sandbox execution of generated algorithms.
+
+### 💳 6. Authoritative Backend & Credit Billing Engine
+* **FastAPI Server**: Asynchronous backend managing authentication, user profiles, credits, and session leases.
+* **Fair 30-Minute Leases**: Server-authoritative session management (1 Credit = 100 units; 30-min block = 50 units).
+* **Crash-Resilient Heartbeats**: 2-minute rolling lease cleanup reclaiming unconsumed credits if the client crashes or disconnects.
+* **Payment Gateways**: Stripe and Razorpay webhook integrations with signature verification.
+
+---
+
+## 🏛️ System Architecture
+
+```mermaid
+flowchart TB
+    subgraph AudioEngine["Audio & Speech Processing Layer"]
+        A1[System Speaker Loopback] -->|WASAPI| B1[Interviewer Stream]
+        A2[Candidate Microphone] -->|WASAPI / MME| B2[Candidate Stream]
+        B1 & B2 --> C[Silero VAD / WebRTC VAD]
+        C --> D[DSP & Noise Reduction]
+        D --> E[Groq Whisper STT API]
+        E --> F[ASR Technical Corrections]
+    end
+
+    subgraph VisionEngine["Multi-Modal Vision & Screen Solver"]
+        V1[Multi-Monitor Capture / Snipper] --> V2[Gemini Multimodal Vision]
+        V1 --> V3[Windows Native winocr]
+        V3 --> V4[Groq LLM Parser]
+    end
+
+    subgraph IntelligenceEngine["Grounding & RAG Intelligence"]
+        F & V2 & V4 --> G[Question Classifier]
+        G --> H[Semantic RAG Search]
+        H -->|Resume / JD / Candidate Profile| I[System Prompt Assembly]
+        I --> J[LLM Inference: GPT-4o / Llama 3.3 / Qwen]
+    end
+
+    subgraph PresentationLayer["Desktop Stealth Presentation HUD"]
+        J --> K[Streaming Answer Formatter]
+        K --> L[PyWebView / CustomTkinter HUD]
+        L --> M[Win32 Capture Exclusion 0x11]
+    end
+
+    subgraph BackendEngine["Authoritative FastAPI & Billing Engine"]
+        N[Desktop Session Client] <-->|JWT + Heartbeat| O[FastAPI Server]
+        O <--> P[(SQLite / SQLAlchemy DB)]
+        O <--> Q[Stripe / Razorpay Webhooks]
+    end
+```
+
+---
+
+## 📁 Repository Structure
+
+```
+c:\ai-assistance\
+├── backend/                         # FastAPI Backend Application
+│   ├── api/                         # REST API Route Handlers
+│   │   ├── auth.py                  # User registration, login, JWT issuance
+│   │   ├── home.py                  # Dashboard stats, documents, and settings
+│   │   ├── payments.py              # Checkout sessions (Stripe / Razorpay)
+│   │   ├── sessions.py              # Session lifecycle, heartbeats, and leases
+│   │   ├── users.py                 # Profile and credit balance endpoints
+│   │   └── webhooks.py              # Payment gateway webhook handlers
+│   ├── database/                    # Persistence Layer
+│   │   ├── connection.py            # SQLite engine & session factory
+│   │   └── models.py                # SQLAlchemy Models (User, Session, Transactions)
+│   ├── services/                    # Business Logic Services
+│   │   ├── auth_service.py          # Password hashing, JWT verification
+│   │   ├── credit_service.py        # Credit accounting & balance enforcement
+│   │   ├── oauth_service.py         # Google OAuth2 integration
+│   │   ├── payment_service.py       # Payment fulfillment & order management
+│   │   └── session_service.py       # 30-min block leases & heartbeat monitoring
+│   ├── config.py                    # App settings & environment definitions
+│   └── main.py                      # FastAPI application entrypoint & lifespan
+│
+├── frontend/                        # Webview UI Assets (HTML5, Vanilla CSS, JS)
+│   ├── app.js                       # Live Copilot HUD state machine & pywebview API
+│   ├── home.html                    # Modern Desktop Dashboard (Widget & Expanded View)
+│   ├── home.css                     # Responsive dashboard styling & themes
+│   ├── home.js                      # Dashboard logic, document uploads & device tests
+│   ├── index.html                   # Live floating capsule HUD & QA cards
+│   └── style.css                    # Glassmorphism design system & micro-animations
+│
+├── knowledge/                       # Candidate Grounding Files
+│   ├── profile.txt                  # Candidate education, roles & background
+│   ├── projects.txt                 # Verified project contributions & architectures
+│   ├── skills.txt                   # Verified technical skills & tool familiarity
+│   └── uploads/                     # Uploaded candidate resumes and JD documents
+│
+├── tests/                           # Unit & Concurrency Test Suites
+│   ├── test_auth.py                 # Auth & token validation tests
+│   ├── test_credits_concurrency.py  # Race condition & credit lease tests
+│   ├── test_e2e_flow.py             # End-to-end user session flows
+│   ├── test_home_api.py             # Dashboard API endpoint tests
+│   ├── test_oauth.py                # OAuth service tests
+│   ├── test_payments.py             # Payment order generation tests
+│   ├── test_sessions.py             # Session start/extend/expire tests
+│   ├── test_stealth_and_streaming_production.py # HUD streaming tests
+│   └── test_stripe_payments.py      # Stripe payment verification tests
+│
+├── answer_formatter.py              # Stream token formatting & markdown syntax highlighting
+├── audio.py                         # System audio loopback recording wrappers
+├── audio_device_manager.py          # Real-time microphone & speaker loopback test utility
+├── classifier.py                    # Question classification (Technical, Behavioral, Coding, etc.)
+├── code_sandbox.py                  # Sandboxed Python execution engine with timeout bounds
+├── context.py                       # Conversation turn context and memory tracking
+├── home_ui.py                       # Fallback Tkinter Home Dashboard implementation
+├── hotkey_manager.py                # Global stealth keyboard shortcut listener
+├── interview_engine.py              # Core multi-source transcription, turn-taking & answering
+├── interview_exporter.py            # PDF / Markdown / JSON post-interview summary exporter
+├── interview_ui.py                  # Fallback Tkinter live interview overlay UI
+├── jd_matcher.py                    # Job Description vs Resume semantic alignment
+├── main.py                          # Primary desktop application entrypoint & coordinator
+├── mock_interviewer.py              # Interactive AI practice interviewer simulation engine
+├── offline_fallback_manager.py      # Local offline response cache & fallback handler
+├── overlay.py                       # Win32 click-through transparent overlay helpers
+├── rag.py                           # TF-IDF & Cosine similarity document retrieval
+├── run_backend.py                   # Standalone backend server runner
+├── screen.py                        # Screen capture helpers
+├── screen_analyzer.py               # Visual layout & screen analysis coordinator
+├── screen_layout_manager.py         # Multi-monitor window bounds & placement helper
+├── screen_snipper.py                # Interactive region cropping tool
+├── session_client.py                # Desktop-to-backend HTTP & heartbeat client
+├── share_watcher.py                 # Screenshare process detector (Zoom, Teams, Meet, OBS)
+├── silero_vad.onnx                  # Pretrained ONNX model for Silero Voice Activity Detection
+├── speech.py                        # Audio DSP, Silero VAD, Noise reduction & Whisper STT
+├── star_story_manager.py            # STAR behavioral story bank & retrieval
+├── system_design_generator.py       # High-level architecture & system design generator
+├── teleprompter.py                  # Paced speech teleprompter delivery helper
+├── ui.py                            # CustomTkinter base interface widgets
+├── vision.py                        # Multimodal screen solving (Gemini Vision + Windows OCR)
+├── web_copilot_view.py              # PyWebView stealth window manager & IPC bridge
+└── requirements.txt                 # Python project dependencies
+```
+
+---
+
+## ⌨️ Global Keyboard Shortcuts
+
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| `Alt + Q` | **Generate AI Answer** | Immediately generates an answer for the latest question. |
+| `Alt + S` | **Analyse Screen** | Captures the active monitor and solves visible coding/design problems. |
+| `Ctrl + Shift + Enter` | **Snip Region** | Opens the interactive screen snipper to crop a specific code problem. |
+| `Alt + K` | **Copy Answer** | Copies the currently displayed answer to clipboard. |
+| `Alt + T` | **Toggle Teleprompter** | Activates the paced teleprompter mode for spoken responses. |
+| `Alt + H` | **Minimize / Hide HUD** | Toggles HUD visibility into a compact floating bubble. |
+| `Alt + X` | **End / Dismiss Card** | Dismisses active QA card or ends the current session. |
+
+---
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+* **Operating System**: Windows 10 / 11 (64-bit required for WASAPI loopback and Win32 capture exclusion).
+* **Python**: Python 3.10, 3.11, or 3.12.
+* **WebView2 Runtime**: Microsoft Edge WebView2 (installed by default on Windows 10/11).
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/abhishek-salunkergb/blujay_ai.git
+cd blujay_ai
+```
+
+### 2. Create and Activate Virtual Environment
+```powershell
 python -m venv .venv
-Windows:
+.venv\Scripts\Activate.ps1
+```
 
-.venv\Scripts\activate
-Install the required dependencies used by the project.
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-Example:
+### 4. Configure Environment Variables (`.env`)
+Create or edit `.env` in the project root:
+```env
+# AI Model API Keys
+GROQ_API_KEY=gsk_your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 
-pip install groq python-dotenv scikit-learn soundcard soundfile
-Additional dependencies may be required depending on the current audio
-implementation.
+# Backend & JWT Configuration
+JWT_SECRET_KEY=your_super_secret_jwt_key_here
+COPILOT_BACKEND_URL=http://127.0.0.1:8000
 
-Running the Application
-After configuring the environment:
+# Payment Gateways (Optional for Local Development)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+RAZORPAY_KEY_ID=rzp_test_...
+RAZORPAY_KEY_SECRET=...
+```
 
+---
+
+## 🏃 Running the Application
+
+### Option 1: Complete Desktop App (Recommended)
+Automatically launches the FastAPI server in the background and opens the PyWebView desktop interface:
+```bash
 python main.py
-The Tkinter application should open.
+```
 
-From the interface, the user can:
+### Option 2: Run Backend Standalone
+```bash
+python run_backend.py
+# Server runs at http://127.0.0.1:8000
+# Interactive API docs available at http://127.0.0.1:8000/docs
+```
 
-Type an interview question.
+---
 
-Use voice input.
+## 🧪 Testing & Verification
 
-Convert speech to text.
+Run the test suite to verify authentication, session management, audio DSP, and capture exclusion:
 
-Retrieve relevant candidate information.
+```bash
+# Run unit and backend integration tests
+python -m unittest discover -s tests -p "test_*.py"
 
-Generate an AI answer.
+# Run Capture Exclusion and Display Affinity Audit
+python test_capture_exclusion_audit.py
 
-View the answer in the UI.
+# Run Audio Latency & Rate Limit Audit
+python test_audio_latency_and_ratelimit_audit.py
 
-RAG Flow
-The current retrieval process works approximately as follows:
+# Run Multi-Monitor Vision Audit
+python test_screen_vision_multimonitor.py
+```
 
-Candidate .txt files
-        |
-        v
-Load documents
-        |
-        v
-Split into text sections
-        |
-        v
-TF-IDF vectorization
-        |
-        v
-Compare question with sections
-        |
-        v
-Cosine similarity
-        |
-        v
-Top relevant sections
-        |
-        v
-LLM context
-The purpose of retrieval is to provide the LLM with the candidate
-information that is most relevant to the current question.
+---
 
-Conversation Memory
-The application maintains recent conversation history.
+## ❓ Frequently Asked Questions (FAQ)
 
-This allows follow-up questions to retain context.
+#### Q: What does `[Capture Exclusion] New/Recreated HWND detected` mean in the console?
+**A:** This is a confirmation that BluJay AI's **Stealth Mode** is active. The application monitors all top-level window handles (`HWND`) created by the process and applies Windows' `WDA_EXCLUDEFROMCAPTURE` (`0x11`) display affinity flag. This ensures the copilot remains completely invisible on Zoom, Teams, Meet, and OBS screen shares.
 
-The current implementation limits stored conversation history to recent
-messages rather than keeping the entire conversation indefinitely.
+#### Q: Can I run BluJay AI without a webcam or microphone loopback?
+**A:** Yes. You can switch the audio source to **Mic Only**, **System Audio Only**, or use **Manual Input Mode** to paste or type questions.
 
-Important Design Principle
-The assistant should be good at:
+#### Q: How does BluJay prevent hallucinations during interviews?
+**A:** The engine implements a strict RAG partition: general technical questions (e.g., *"What is Kafka?"*) are answered with objective concepts, whereas project and experience questions (e.g., *"How did you use Kafka in your project?"*) are strictly bounded to the verified data in your `knowledge/` files.
 
-Turning confirmed candidate facts into natural interview answers.
+---
 
-It should not be good at:
-
-Making the candidate appear more experienced by inventing details.
-
-Therefore:
-
-Confirmed fact
-     |
-     v
-Retrieve
-     |
-     v
-Explain naturally
-not:
-
-Missing fact
-     |
-     v
-LLM assumption
-     |
-     v
-Present assumption as candidate experience
-Current Development Status
-Implemented / working:
-
-Tkinter desktop UI
-
-Typed question input
-
-Voice input
-
-Speech-to-text
-
-Groq LLM integration
-
-Streaming AI responses
-
-Candidate knowledge retrieval
-
-TF-IDF-based RAG
-
-Conversation history
-
-Candidate-specific answer rules
-
-System audio recording development
-
-Future Improvements
-Potential future improvements include:
-
-Better audio capture and handling
-
-Improved retrieval and document chunking
-
-Better candidate knowledge organization
-
-Stronger question classification
-
-Improved follow-up question handling
-
-Better answer formatting
-
-More reliable context selection
-
-Testing across technical, project, coding, HR, and behavioral
-questions
-
-Automated evaluation of factual consistency
-
-Project Philosophy
-The goal is not simply to generate impressive answers.
-
-The goal is to generate:
-
-Accurate answers
-
-Natural answers
-
-Speakable answers
-
-Technically useful answers
-
-Candidate-specific answers when supported
-
-No fabricated candidate experience
-
-Library
-/
-README.md
-
-
-AI Interview Assistant
-An AI-powered interview practice assistant that listens to interview
-questions, converts speech to text, retrieves relevant candidate
-information, and generates natural interview-style answers.
-
-Overview
-The project is designed to help a candidate practice answering
-technical, project, coding, HR, and follow-up interview questions.
-
-The system combines:
-
-Speech-to-text
-
-Retrieval-Augmented Generation (RAG)
-
-Candidate knowledge files
-
-LLM-based answer generation
-
-Conversation history
-
-A Tkinter desktop interface
-
-Groq API
-
-Current Architecture
-Interviewer / User
-       |
-       v
-Audio or Typed Question
-       |
-       v
-Speech-to-Text
-(Whisper)
-       |
-       v
-Question Text
-       |
-       v
-RAG / Knowledge Retrieval
-       |
-       v
-Relevant Candidate Information
-       |
-       v
-LLM
-       |
-       v
-Interview-Style Answer
-       |
-       v
-Tkinter UI
-Main Components
-1. main.py
-The main application controller.
-
-Responsibilities:
-
-Load environment variables
-
-Initialize the Groq client
-
-Maintain conversation history
-
-Process typed questions
-
-Process speech questions
-
-Retrieve candidate information
-
-Send prompts to the LLM
-
-Stream generated answers to the UI
-
-2. ui.py
-Contains the Tkinter user interface.
-
-The interface includes:
-
-Application title
-
-Status indicator
-
-Question display
-
-AI answer display
-
-Voice input
-
-Typed question input
-
-3. speech.py
-Responsible for speech processing.
-
-The current system uses speech-to-text to convert recorded audio into
-text before sending the question to the LLM.
-
-4. audio.py
-Responsible for computer/system audio recording.
-
-The project is being developed to support capturing audio from the
-computer so that spoken interview questions can be converted into text.
-
-5. rag.py
-Responsible for retrieving relevant information from the candidate's
-knowledge files.
-
-The current implementation uses:
-
-TF-IDF
-
-Cosine similarity
-
-Text chunks
-
-Top-k retrieval
-
-The retrieved information is passed to the LLM as candidate context.
-
-6. knowledge/
-Contains candidate-specific .txt files.
-
-Example information includes:
-
-Education
-
-Programming languages
-
-Frameworks
-
-Databases
-
-AI/ML knowledge
-
-Cloud knowledge
-
-Projects
-
-Confirmed project contributions
-
-The knowledge files are treated as the source of truth for
-candidate-specific claims.
-
-Candidate Knowledge Rules
-A core design principle of this project is:
-
-The AI must never invent candidate experience.
-
-The model may explain general technical concepts using its general
-knowledge, but candidate-specific claims must be supported by the
-candidate knowledge.
-
-For example, if the knowledge says:
-
-I used Django for the backend of the Farmer Marketplace,
-particularly for product listing and user-related functionality.
-The assistant may explain that experience naturally.
-
-However, it should not automatically claim that the candidate:
-
-Used Django ORM
-
-Built REST APIs
-
-Implemented JWT authentication
-
-Used Django Admin
-
-Implemented permissions
-
-Used a specific Django package
-
-unless those facts are explicitly added to the candidate knowledge.
-
-Knowledge vs Experience
-The system distinguishes between general technical knowledge and
-confirmed experience.
-
-For example:
-
-AI/ML:
-Machine Learning, NLP, RAG, LLMs
-This confirms that these technologies are part of the candidate's stated
-knowledge.
-
-It does not automatically confirm that the candidate:
-
-Built a RAG pipeline
-
-Used FAISS
-
-Created embeddings
-
-Implemented vector search
-
-Built a production LLM application
-
-Those details must be explicitly confirmed before the assistant presents
-them as personal experience.
-
-Answer Types
-General Technical Questions
-Example:
-
-What is Django?
-The assistant should explain Django as a technical concept.
-
-It should not automatically create a project-specific explanation unless
-the question asks about the candidate's experience.
-
-Candidate Experience Questions
-Example:
-
-How did you use Django in the Farmer Marketplace?
-The assistant should answer in first person and use only confirmed
-project information.
-
-Project Questions
-Example:
-
-Explain your Farmer Marketplace project.
-The assistant should use confirmed information about:
-
-Project purpose
-
-Technologies
-
-Features
-
-Candidate contribution
-
-Missing information should not be invented.
-
-Why Questions
-Example:
-
-Why did you choose Django?
-The assistant should only provide a personal reason if that reason has
-been explicitly added to the candidate knowledge.
-
-If the reason is not known, the assistant should not invent one.
-
-Coding Questions
-The assistant should:
-
-Explain the approach.
-
-Provide clean code.
-
-Explain important parts.
-
-Include complexity when useful.
-
-HR / Behavioral Questions
-Answers should be:
-
-Natural
-
-Conversational
-
-Based on confirmed candidate information
-
-Free from invented achievements or experience
-
-Follow-up Questions
-The assistant uses conversation history to understand what the
-interviewer is referring to while still following the candidate-facts
-rule.
-
-Technologies
-Current project technologies include:
-
-Python
-
-Tkinter
-
-Groq API
-
-Whisper
-
-TF-IDF
-
-Cosine Similarity
-
-RAG
-
-LLMs
-
-React / Django / MySQL as technologies represented in candidate
-knowledge
-
-API Configuration
-Create a .env file in the project root:
-
-GROQ_API_KEY=your_groq_api_key
-Do not commit the .env file to Git.
-
-A .gitignore file should include:
-
-.env
-.venv/
-__pycache__/
-*.pyc
-Installation
-Create and activate a Python virtual environment:
-
-python -m venv .venv
-Windows:
-
-.venv\Scripts\activate
-Install the required dependencies used by the project.
-
-Example:
-
-pip install groq python-dotenv scikit-learn soundcard soundfile
-Additional dependencies may be required depending on the current audio
-implementation.
-
-Running the Application
-After configuring the environment:
-
-python main.py
-The Tkinter application should open.
-
-From the interface, the user can:
-
-Type an interview question.
-
-Use voice input.
-
-Convert speech to text.
-
-Retrieve relevant candidate information.
-
-Generate an AI answer.
-
-View the answer in the UI.
-
-RAG Flow
-The current retrieval process works approximately as follows:
-
-Candidate .txt files
-        |
-        v
-Load documents
-        |
-        v
-Split into text sections
-        |
-        v
-TF-IDF vectorization
-        |
-        v
-Compare question with sections
-        |
-        v
-Cosine similarity
-        |
-        v
-Top relevant sections
-        |
-        v
-LLM context
-The purpose of retrieval is to provide the LLM with the candidate
-information that is most relevant to the current question.
-
-Conversation Memory
-The application maintains recent conversation history.
-
-This allows follow-up questions to retain context.
-
-The current implementation limits stored conversation history to recent
-messages rather than keeping the entire conversation indefinitely.
-
-Important Design Principle
-The assistant should be good at:
-
-Turning confirmed candidate facts into natural interview answers.
-
-It should not be good at:
-
-Making the candidate appear more experienced by inventing details.
-
-Therefore:
-
-Confirmed fact
-     |
-     v
-Retrieve
-     |
-     v
-Explain naturally
-not:
-
-Missing fact
-     |
-     v
-LLM assumption
-     |
-     v
-Present assumption as candidate experience
-Current Development Status
-Implemented / working:
-
-Tkinter desktop UI
-
-Typed question input
-
-Voice input
-
-Speech-to-text
-
-Groq LLM integration
-
-Streaming AI responses
-
-Candidate knowledge retrieval
-
-TF-IDF-based RAG
-
-Conversation history
-
-Candidate-specific answer rules
-
-System audio recording development
-
-Future Improvements
-Potential future improvements include:
-
-Better audio capture and handling
-
-Improved retrieval and document chunking
-
-Better candidate knowledge organization
-
-Stronger question classification
-
-Improved follow-up question handling
-
-Better answer formatting
-
-More reliable context selection
-
-Testing across technical, project, coding, HR, and behavioral
-questions
-
-Automated evaluation of factual consistency
-
-Project Philosophy
-The goal is not simply to generate impressive answers.
-
-The goal is to generate:
-
-Accurate answers
-
-Natural answers
-
-Speakable answers
-
-Technically useful answers
-
-Candidate-specific answers when supported
-
-No fabricated candidate experience
-
+## 📄 License
+Proprietary — All rights reserved. Developed for high-performance interview preparation.

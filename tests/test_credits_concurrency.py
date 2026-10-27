@@ -85,6 +85,19 @@ def test_concurrent_credit_deductions_prevent_double_spending():
     print("Concurrent deduction test PASSED cleanly!")
 
 
+def teardown_module():
+    engine.dispose()
+    if os.path.exists(DB_FILE):
+        try:
+            os.remove(DB_FILE)
+        except Exception:
+            pass
+
+
 if __name__ == "__main__":
     setup_module()
-    test_concurrent_credit_deductions_prevent_double_spending()
+    try:
+        test_concurrent_credit_deductions_prevent_double_spending()
+    finally:
+        teardown_module()
+

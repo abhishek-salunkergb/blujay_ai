@@ -19,6 +19,8 @@ build/
 
 # Database & Logs
 *.db
+*.db-wal
+*.db-shm
 *.sqlite3
 *.log
 
@@ -33,3 +35,5 @@ test_leetcode.png
 .idea/
 .DS_Store
 Thumbs.db
+scratch/
+

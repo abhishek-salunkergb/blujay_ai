@@ -1,0 +1,30 @@
+# =============================================================================
+# BluJay AI - Cloud Backend Server Dependencies
+# =============================================================================
+# Lightweight, production-grade requirements for deploying the FastAPI backend.
+# Excludes desktop-only client packages (soundcard, pywebview, onnxruntime, etc.)
+# =============================================================================
+
+# Core Framework & ASGI Server
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Database & ORM (SQLite + PostgreSQL support)
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# Security, Auth & Cryptography
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+pyjwt>=2.8.0
+python-multipart>=0.0.6
+
+# HTTP Client & Environment Configuration
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Payment Gateways
+stripe>=7.0.0

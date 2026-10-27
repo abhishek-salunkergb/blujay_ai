@@ -1,0 +1,41 @@
+{
+  "candidate_name": "Alex Mercer",
+  "title": "Full Stack Software Engineer",
+  "skills": [
+    "Python",
+    "Django",
+    "FastAPI",
+    "React",
+    "JavaScript",
+    "PostgreSQL",
+    "Redis",
+    "Docker",
+    "REST APIs",
+    "Git"
+  ],
+  "projects": [
+    {
+      "name": "Farmer Marketplace",
+      "role": "Lead Full Stack Developer",
+      "technologies": [
+        "Python",
+        "Django",
+        "React",
+        "PostgreSQL",
+        "Redis"
+      ],
+      "description": "A web marketplace connecting local farmers directly with bulk produce buyers.",
+      "contributions": [
+        "Engineered RESTful backend APIs using Django and PostgreSQL.",
+        "Built reactive buyer and seller dashboards in React.",
+        "Implemented JWT-based user authentication with role-based access control.",
+        "Designed product catalog with search, filtering, and Redis query caching."
+      ],
+      "explicit_exclusions": [
+        "Did NOT deploy to Kubernetes (deployed on single-node Docker VPS).",
+        "Did NOT work at Google, Netflix, Goldman Sachs, or Microsoft.",
+        "Did NOT use Rust, C++, Kubernetes, or Solana blockchain."
+      ]
+    }
+  ]
+}

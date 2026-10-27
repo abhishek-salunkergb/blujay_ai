@@ -13,7 +13,8 @@ import re
 import time
 import base64
 import tempfile
-from typing import Dict, Any, Optional
+import threading
+from typing import Dict, Any, Optional, Tuple
 from PIL import Image, ImageGrab
 from groq import Groq
 
@@ -33,7 +34,7 @@ def is_visual_reference_question(question: str) -> bool:
     """
     if not question:
         return False
-    q = question.lower().strip()
+    q = question.lower().strip().rstrip(" .?!,")
     
     # If the spoken question already explicitly specifies a self-contained algorithmic concept, screen analysis is not required
     self_contained_indicators = [
@@ -45,14 +46,23 @@ def is_visual_reference_question(question: str) -> bool:
         
     visual_triggers = [
         r"\b(can you solve this|take a look at this|look at this)\b",
-        r"\b(solve this\??|solve this problem\??|solve this challenge\??|solve this code\??)$",
+        r"\b(solve (this|it|this problem|this challenge|this code))\b",
+        r"\b(implement (this|it|this problem|this challenge|the problem))\b",
+        r"\b(code (this|it|this problem)|now code (this|it))\b",
+        r"\b(solve (the )?(problem|question|challenge|code) (on|shown on|displayed on|given on|visible on) (the )?screen)\b",
+        r"\b(implement (the )?(problem|question|challenge|code) (shown|on the screen|on screen|given on the screen|given on screen))\b",
+        r"\b(explain (this|the) (problem|challenge|code|question|error|traceback))\b",
+        r"\b(give (me )?(pseudo\s*code|the code) for this)\b",
+        r"\b(optimize (the|this) (code|solution|problem) (on screen|on the screen|shown on screen))\b",
+        r"\b(what('s| is) (the )?time complexity of this)\b",
         r"\b(what('s| is) wrong with this|why is this failing|fix this|find the bug)\b",
-        r"\b(what does this (code )?output|what('s| is) the output)\b",
-        r"\b(can you write the code|can you implement this|write code for this)\b",
+        r"\b(what does this (code )?output|what('s| is) the output|output of this)\b",
+        r"\b(can you write the code|can you implement this|write code for this|write (the|a) solution|code the solution|write (it|this)( iteratively| recursively)?|now write (it|this)( iteratively| recursively)?)\b",
+        r"\b(can you write a query for this|write a query for this|query for this|sql for this)\b",
         r"\b(how would you (get|find|calculate|query) this)\b",
         r"\b(can you modify this|how would you change this)\b",
         r"\b(look at (the|this) (screen|editor|problem|code|table|error))\b",
-        r"^(solve this\??|fix this\??|what's wrong\??|output\??)$"
+        r"^(solve this|solve it|implement this|implement it|code this|code it|write it|write this|fix this|what's wrong|output|write the solution)$"
     ]
     return any(re.search(p, q) for p in visual_triggers)
 
@@ -71,7 +81,9 @@ def is_spoken_coding_question(question: str) -> bool:
         "reverse a linked list", "two sum", "binary search", "find the second largest",
         "find the longest substring", "time complexity of", "space complexity of",
         "can you optimize it", "can we optimize this", "what is the time complexity",
-        "what's the complexity"
+        "what's the complexity", "give me the code", "give me code", "show me the code",
+        "implement this", "now code it", "write the solution", "give me pseudocode",
+        "optimize your solution"
     ]
     if any(q.startswith(s) or s in q for s in coding_starters):
         return True
@@ -79,10 +91,25 @@ def is_spoken_coding_question(question: str) -> bool:
     return False
 
 
-def capture_screen_image() -> str:
-    """Takes a screenshot of the primary display, saving to a temp file."""
+def capture_screen_image(monitor_id: Optional[int] = None, bbox: Optional[Tuple[int, int, int, int]] = None) -> str:
+    """Takes a screenshot of the preferred/active monitor or bounding box using vision.capture_screen_image with DPI awareness."""
     try:
-        screenshot = ImageGrab.grab()
+        from vision import capture_screen_image as vision_capture
+        return vision_capture(monitor_id=monitor_id, bbox=bbox)
+    except Exception:
+        pass
+
+    try:
+        if bbox:
+            try:
+                screenshot = ImageGrab.grab(bbox=bbox, all_screens=True)
+            except Exception:
+                screenshot = ImageGrab.grab(bbox=bbox)
+        else:
+            try:
+                screenshot = ImageGrab.grab(all_screens=True)
+            except Exception:
+                screenshot = ImageGrab.grab()
     except Exception:
         try:
             import pyautogui
@@ -91,7 +118,8 @@ def capture_screen_image() -> str:
             print(f"Screen capture notice: {e}")
             screenshot = Image.new("RGB", (800, 600), color=(0, 0, 0))
             
-    temp_path = os.path.join(tempfile.gettempdir(), "parakit_interview_screen.png")
+    import uuid
+    temp_path = os.path.join(tempfile.gettempdir(), f"interview_screen_{os.getpid()}_{uuid.uuid4().hex[:8]}.png")
     screenshot.save(temp_path, format="PNG")
     return temp_path
 
@@ -105,7 +133,8 @@ def encode_image_base64(image_path: str) -> str:
 def analyze_visible_screen(
     client: Optional[Groq] = None,
     mock_screen_data: Optional[Dict[str, Any]] = None,
-    force_refresh: bool = False
+    force_refresh: bool = False,
+    session: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     On-demand screen analysis for coding interview tasks.
@@ -116,11 +145,19 @@ def analyze_visible_screen(
     
     # Return mock screen data if provided (for automated testing / environments without display)
     if mock_screen_data:
-        _SCREEN_CACHE = {"data": mock_screen_data, "timestamp": now}
+        if session is not None and hasattr(session, "screen_context_cache"):
+            session.screen_context_cache = {"data": mock_screen_data, "timestamp": now}
+        else:
+            _SCREEN_CACHE = {"data": mock_screen_data, "timestamp": now}
         return mock_screen_data
         
-    # Check cache TTL
-    if not force_refresh and _SCREEN_CACHE["data"] and (now - _SCREEN_CACHE["timestamp"] < CACHE_TTL_SECONDS):
+    # 1. If session is provided, strictly use session cache (prevent cross-session contamination)
+    if session is not None and hasattr(session, "screen_context_cache"):
+        s_cache = getattr(session, "screen_context_cache", None)
+        if not force_refresh and s_cache and s_cache.get("data") and (now - s_cache.get("timestamp", 0) < CACHE_TTL_SECONDS):
+            return s_cache["data"]
+    elif session is None and not force_refresh and _SCREEN_CACHE.get("data") and (now - _SCREEN_CACHE.get("timestamp", 0) < CACHE_TTL_SECONDS):
+        # 2. Standalone fallback (only when no session object exists)
         return _SCREEN_CACHE["data"]
         
     # Default fallback structured context
@@ -135,20 +172,33 @@ def analyze_visible_screen(
         "confidence": 0.0
     }
     
-    if not client:
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not client and not openai_key:
         return empty_result
         
     image_path = ""
     try:
-        image_path = capture_screen_image()
-        b64_img = encode_image_base64(image_path)
+        mon_id = getattr(session, "selected_monitor_id", None) if session else None
+        image_path = capture_screen_image(monitor_id=mon_id)
         
-        prompt = """You are a Real-Time Technical Interview Screen Analyzer.
-Analyze the provided screenshot of the user's screen.
+        # Extract on-screen text using hardware-accelerated Windows Native OCR
+        extracted_text = ""
+        try:
+            from vision import extract_text_from_image
+            extracted_text = extract_text_from_image(image_path)
+        except Exception:
+            pass
+
+        prompt = f"""You are a Real-Time Technical Interview Screen Analyzer.
+Analyze the following text and code extracted from the user's screen:
+
+[EXTRACTED ON-SCREEN CONTENT]:
+{extracted_text if extracted_text.strip() else "(Blank / minimal text visible on screen)"}
+
 Determine if there is an active coding problem, code editor, SQL query, or error/traceback displayed.
 
 OUTPUT STRICTLY VALID JSON ONLY:
-{
+{{
   "is_coding_related": true,
   "language": "Python|Java|C++|JavaScript|TypeScript|SQL|Go|Rust|Unknown",
   "problem_statement": "Exact text of the visible problem statement or coding prompt",
@@ -157,32 +207,59 @@ OUTPUT STRICTLY VALID JSON ONLY:
   "visible_question": "Short 1-sentence summary of the visible coding challenge",
   "question_type": "coding|debugging|sql|none",
   "confidence": 0.95
-}
+}}
 If no coding problem or code is visible, set is_coding_related: false, question_type: "none", and confidence: 0.0."""
 
-        # Try vision model with fallback
         resp = None
-        for v_model in ["qwen/qwen3.6-27b", "llama-3.2-90b-vision-preview", "llama-3.2-11b-vision-preview"]:
+        # Tier 1 (if OPENAI_API_KEY present): Direct OpenAI GPT-4o-mini structured JSON
+        if openai_key:
             try:
-                resp = client.chat.completions.create(
-                    model=v_model,
+                import importlib
+                openai_mod = importlib.import_module("openai")
+                o_client = openai_mod.OpenAI(api_key=openai_key)
+                resp = o_client.chat.completions.create(
+                    model="gpt-4o-mini",
                     messages=[
                         {
+                            "role": "system",
+                            "content": "You are a JSON-only screen analysis parser. Always output valid JSON."
+                        },
+                        {
                             "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_img}"}}
-                            ]
+                            "content": prompt
                         }
                     ],
                     temperature=0.0,
                     max_tokens=1000,
                     response_format={"type": "json_object"}
                 )
-                if resp:
-                    break
-            except Exception:
-                continue
+            except Exception as oe:
+                print(f"OpenAI screen analysis notice: {oe}, trying Groq models...")
+
+        # Tier 2: Groq models fallback
+        if not resp and client:
+            for v_model in ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]:
+                try:
+                    resp = client.chat.completions.create(
+                        model=v_model,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a JSON-only screen analysis parser. Always output valid JSON."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        temperature=0.0,
+                        max_tokens=1000,
+                        response_format={"type": "json_object"}
+                    )
+                    if resp:
+                        break
+                except Exception:
+                    continue
 
         if not resp:
             return empty_result
@@ -191,7 +268,10 @@ If no coding problem or code is visible, set is_coding_related: false, question_
         content_str = resp.choices[0].message.content or "{}"
         clean_json_str = re.sub(r"<think>.*?</think>", "", content_str, flags=re.DOTALL).strip()
         data = json.loads(clean_json_str)
-        _SCREEN_CACHE = {"data": data, "timestamp": now}
+        if session is not None and hasattr(session, "screen_context_cache"):
+            session.screen_context_cache = {"data": data, "timestamp": now}
+        else:
+            _SCREEN_CACHE = {"data": data, "timestamp": now}
         return data
     except Exception as e:
         return empty_result
@@ -201,6 +281,23 @@ If no coding problem or code is visible, set is_coding_related: false, question_
                 os.remove(image_path)
             except Exception:
                 pass
+
+
+def start_async_screen_refresh(
+    client: Optional[Groq] = None,
+    session: Optional[Any] = None
+) -> None:
+    """
+    Refreshes screen context asynchronously on a background worker thread.
+    Allows the voice speech processing loop to read screen context in 0ms without blocking.
+    """
+    def _async_worker():
+        try:
+            analyze_visible_screen(client=client, force_refresh=True, session=session)
+        except Exception as e:
+            print(f"[Async Screen Refresh] Notice: {e}")
+
+    threading.Thread(target=_async_worker, daemon=True).start()
 
 
 def fuse_voice_and_screen_question(
@@ -268,7 +365,9 @@ def fuse_voice_and_screen_question(
         
         # Case A: SQL Inquiry
         if screen_q_type == "sql" or "sql" in spoken_lower or "salary" in spoken_lower or "table" in spoken_lower or "SELECT" in code:
-            refined = f"Write an optimized SQL query for: {spoken_q} (Schema/Context: {code or prob})"
+            ctx_parts = [p for p in [prob, code] if p]
+            ctx_str = " | ".join(ctx_parts)
+            refined = f"Write an optimized SQL query for: {spoken_q} (Schema/Context: {ctx_str})"
             return {
                 "refined_question": refined,
                 "question_type": "sql",

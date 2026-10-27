@@ -6,6 +6,7 @@ back-of-the-envelope scale calculations, and core trade-offs on-demand
 for FAANG / Senior System Design interview rounds.
 """
 
+import os
 import re
 import json
 from typing import Dict, Any, Optional
@@ -135,21 +136,29 @@ Return a valid JSON object matching this schema:
 }}
 Only return valid JSON without markdown code fence formatting.
 """
-    try:
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=1400
-        )
-        content = completion.choices[0].message.content.strip()
-        content = re.sub(r"^```json\s*", "", content)
-        content = re.sub(r"^```\s*", "", content)
-        content = re.sub(r"\s*```$", "", content)
-        data = json.loads(content)
-        if "ascii_diagram" in data and "key_trade_offs" in data:
-            return data
-    except Exception as e:
-        print(f"Notice during LLM System Design generation: {e}")
+    models_to_try = [
+        os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        "llama-3.3-70b-versatile",
+        os.getenv("FAST_GROQ_MODEL", "llama-3.1-8b-instant"),
+        "llama-3.1-8b-instant"
+    ]
+    models_to_try = list(dict.fromkeys(models_to_try))
+    for model_name in models_to_try:
+        try:
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                max_tokens=1400
+            )
+            content = completion.choices[0].message.content.strip()
+            content = re.sub(r"^```json\s*", "", content)
+            content = re.sub(r"^```\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
+            data = json.loads(content)
+            if "ascii_diagram" in data and "key_trade_offs" in data:
+                return data
+        except Exception as e:
+            continue
 
     return generate_heuristic_architecture(topic)

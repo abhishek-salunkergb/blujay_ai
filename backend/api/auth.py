@@ -1,10 +1,9 @@
 from typing import Optional
-from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database.connection import get_db
-from backend.database.models import User, Session as AppSession
+from backend.database.models import User
 from backend.config import settings
 from backend.services.auth_service import (
     hash_password,

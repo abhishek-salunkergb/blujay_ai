@@ -9,7 +9,6 @@ Provides an interactive mock interview simulation with:
 - Comprehensive multi-category performance scorecard (Clarity, Depth, Relevance, Structure)
 """
 
-import json
 import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime

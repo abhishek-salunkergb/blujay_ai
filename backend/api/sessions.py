@@ -357,13 +357,22 @@ async def websocket_session_stream(
                 )
 
                 try:
-                    response_stream = groq_client.chat.completions.create(
-                        model="qwen/qwen3.6-27b",
-                        messages=[{"role": "user", "content": prompt}],
-                        stream=True,
-                        temperature=0.2,
-                        max_tokens=500
-                    )
+                    try:
+                        response_stream = groq_client.chat.completions.create(
+                            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+                            messages=[{"role": "user", "content": prompt}],
+                            stream=True,
+                            temperature=0.2,
+                            max_tokens=500
+                        )
+                    except Exception:
+                        response_stream = groq_client.chat.completions.create(
+                            model=os.getenv("FAST_GROQ_MODEL", "llama-3.1-8b-instant"),
+                            messages=[{"role": "user", "content": prompt}],
+                            stream=True,
+                            temperature=0.2,
+                            max_tokens=500
+                        )
 
                     full_response = ""
                     for chunk in response_stream:

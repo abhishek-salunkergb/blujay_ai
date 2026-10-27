@@ -32,13 +32,11 @@ class CreditService:
         result = db.execute(stmt, {"amount": amount_units, "user_id": user_id})
 
         if result.rowcount == 0:
-            db.commit()
+            db.rollback()
             user = db.query(User).filter(User.id == user_id).first()
             if not user:
                 return False, 0, "User not found"
             return False, user.credit_units, f"Insufficient credits: {user.credit_units} available, {amount_units} required"
-
-        db.commit()
 
         # 2. Fetch current balance after deduction (expire cache for raw update)
         db.expire_all()

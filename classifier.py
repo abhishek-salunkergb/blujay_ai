@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any
+from typing import Dict
 
 
 # ============================================================
@@ -38,11 +38,43 @@ def classify_question(question: str) -> str:
             return "clarification"
 
     # 2. FOLLOW-UP & CODING SPECIFIC INQUIRIES
-    if any(kw in q for kw in ["what's the time complexity", "what's the space complexity", "what's the complexity", "what is the complexity", "what is the time complexity", "what is the space complexity", "what is the big o", "what's the big o", "time complexity", "space complexity", "complexity of this", "tell me the complexity"]):
+    # Coding Optimization (Checked before complexity to capture 'improve the time complexity')
+    if any(kw in q for kw in [
+        "can you optimize", "can we optimize", "can you optimize it", "can we optimize this",
+        "can you optimize this", "can we do better", "optimize the solution", "optimize your solution",
+        "more optimal approach", "make it faster", "optimize this", "optimize that", "optimize it",
+        "make this faster", "make that faster", "optimize the approach", "optimize your approach",
+        "optimize approach", "optimize solution", "optimize the time", "optimize the space",
+        "optimize time complexity", "optimize space complexity",
+        "can we improve the time complexity", "can we improve the space complexity",
+        "improve time complexity", "improve the time complexity", "improve space complexity"
+    ]):
+        return "coding_optimization"
+
+    # Coding Complexity Inquiries
+    if any(kw in q for kw in [
+        "what's the time complexity", "what's the space complexity", "what's the complexity",
+        "what is the complexity", "what is the time complexity", "what is the space complexity",
+        "what is the big o", "what's the big o", "time complexity", "space complexity",
+        "complexity of this", "tell me the complexity", "big o complexity", "big o of this"
+    ]):
         return "coding_complexity"
 
-    if any(kw in q for kw in ["can you optimize it", "can we optimize this", "can you optimize this", "can we do better", "optimize the solution", "more optimal approach", "make it faster"]):
-        return "coding_optimization"
+    # Pseudocode
+    if any(kw in q for kw in [
+        "give me pseudocode", "write pseudocode", "show me pseudocode", "pseudocode for this",
+        "give pseudo code", "show pseudocode", "give pseudocode", "write pseudo code",
+        "pseudo code", "pseudocode"
+    ]):
+        return "pseudocode"
+
+    # Code Explanation
+    if any(kw in q for kw in [
+        "explain your approach", "explain the approach", "explain your code", "walk me through your code",
+        "explain the solution", "explain your solution", "how does your code work", "walk me through the solution",
+        "explain this code", "explain the code", "walk me through this code"
+    ]):
+        return "code_explanation"
 
     follow_up_starters = [
         "what about", "how about", "and for", "why not", "then what",
@@ -53,8 +85,8 @@ def classify_question(question: str) -> str:
 
     # 3. PROJECT / PRACTICAL IMPLEMENTATION (Prioritize candidate project inquiries)
     project_keywords = [
-        "your project", "in your project", "the project you built", "farmer marketplace",
-        "project architecture", "project features", "why did you choose this stack",
+        "your project", "in your project", "the project you built", "e-commerce application",
+        "marketplace platform", "project architecture", "project features", "why did you choose this stack",
         "what challenges did you face in your project", "how did you implement in your project"
     ]
     if any(kw in q for kw in project_keywords) or ("project" in q and "your" in q):
@@ -81,12 +113,22 @@ def classify_question(question: str) -> str:
 
     # 6. CODING / ALGORITHMS / DSA
     coding_keywords = [
-        "write a program", "write code", "code for", "function to",
+        "write a program", "write code", "code for", "function to", "write a function",
         "program to", "solve this", "algorithm", "time complexity", "space complexity",
         "reverse a", "binary search", "two sum", "linked list", "leetcode", "data structure",
         "second largest element", "longest substring", "valid parentheses", "merge intervals",
         "given an array", "given a string", "given a list", "array of integers", "subarray",
-        "target sum", "maximum subarray", "indices of the two numbers", "add up to target"
+        "target sum", "maximum subarray", "indices of the two numbers", "add up to target",
+        "how to reverse", "how do you reverse", "how to implement", "implement a", "implement the",
+        "write python", "write java", "write c++", "write javascript", "find the maximum",
+        "find the minimum", "sort an array", "tree traversal", "dfs", "bfs", "dynamic programming",
+        "sliding window", "two pointers", "stack", "queue", "binary tree", "graph", "hashmap", "heap", "recursion",
+        # Natural imperative coding commands
+        "give me the code", "give me code", "show me the code", "show the code",
+        "implement this", "implement that", "implement it", "now code it", "now code this",
+        "code this", "code that", "code it", "code it up", "write the solution", "code the solution",
+        "write a solution", "write the code", "can you code this", "can you implement this", "solve the problem",
+        "write it iteratively", "now write it iteratively", "write it recursively", "now write it", "write it"
     ]
     if any(kw in q for kw in coding_keywords):
         return "coding"
@@ -118,249 +160,145 @@ def classify_question(question: str) -> str:
     if any(kw in q for kw in database_keywords):
         return "database"
 
-    # 7. CLOUD & DEVOPS
+    # 9. CLOUD / INFRASTRUCTURE
     cloud_keywords = [
-        "aws", "gcp", "azure", "kubernetes", "k8s", "docker", "terraform",
-        "ci/cd", "serverless", "lambda", "ec2", "s3", "containerization",
-        "devops", "cloud deployment", "infrastructure as code"
+        "docker", "kubernetes", "k8s", "aws", "gcp", "azure", "ci/cd",
+        "terraform", "serverless", "lambda", "ecs", "eks", "helm"
     ]
     if any(kw in q for kw in cloud_keywords):
         return "cloud"
 
-    # 8. AI / MACHINE LEARNING
+    # 10. AI / ML
     ai_ml_keywords = [
-        "machine learning", "deep learning", "neural network", "transformer",
-        "rag", "llm", "fine-tuning", "pytorch", "tensorflow", "embeddings",
-        "vector database", "model evaluation", "prompt engineering", "langchain",
-        "loss function", "optimizer", "ml model", "nlp", "computer vision"
+        "machine learning", "deep learning", "neural network", "llm", "rag",
+        "transformer", "fine-tuning", "embedding", "vector database", "pytorch", "tensorflow"
     ]
     if any(kw in q for kw in ai_ml_keywords):
         return "ai_ml"
 
-    # 9. RESUME / BACKGROUND
+    # 11. RESUME / EXPERIENCE
     resume_keywords = [
-        "walk me through your resume", "tell me about your background",
-        "your journey", "your career", "your previous role", "at your last company",
-        "why are you leaving", "summarize your experience"
+        "tell me about yourself", "walk me through your resume", "your experience",
+        "your background", "introduce yourself", "years of experience", "current role"
     ]
     if any(kw in q for kw in resume_keywords):
         return "resume"
 
-    # 10. BEHAVIORAL
+    # 12. BEHAVIORAL
     behavioral_keywords = [
-        "tell me about a time", "conflict", "disagreed", "difficult situation",
-        "under pressure", "tight deadline", "failure", "mistake you made",
-        "handled feedback", "difficult stakeholder", "proudest accomplishment"
+        "tell me about a time", "conflict with", "difficult situation", "failed project",
+        "leadership", "disagreement", "under pressure", "tight deadline", "proudest achievement"
     ]
     if any(kw in q for kw in behavioral_keywords):
         return "behavioral"
 
-    # 11. HR / CULTURE
+    # 13. HR / LOGISTICS
     hr_keywords = [
-        "tell me about yourself", "why should we hire you", "why do you want to work here",
-        "where do you see yourself in 5 years", "your greatest strength",
-        "your weakness", "salary expectations", "company culture", "work environment"
+        "salary expectation", "notice period", "why this company", "why leave",
+        "relocation", "remote work", "joining date", "strengths and weaknesses"
     ]
     if any(kw in q for kw in hr_keywords):
         return "hr"
 
-    # 12. TECHNICAL CONCEPTS
-    technical_keywords = [
-        "what is", "how does", "difference between", "explain",
-        "polymorphism", "inheritance", "rest api", "graphql", "jwt",
-        "concurrency", "multithreading", "garbage collection", "tcp vs udp"
-    ]
-    if any(kw in q for kw in technical_keywords):
-        return "technical"
-
-    # 13. GENERAL
-    return "general"
+    return "technical"
 
 
 # ============================================================
-# STRATEGY SELECTOR FOR EACH QUESTION TYPE
+# STRATEGY SELECTOR FOR EACH QUESTION TYPE (BLUJAY AI DIRECT SPOKEN DELIVERY)
 # ============================================================
 
 STRATEGY_MAP: Dict[str, str] = {
     "technical": (
         "TECHNICAL STRATEGY:\n"
-        "Format with clean, scannable uppercase section titles:\n"
-        "ANSWER\n"
-        "[Crisp 1-2 sentence core direct response/definition in natural first-person spoken tone]\n\n"
-        "APPROACH\n"
-        "• [Key step or architectural mechanic 1]\n"
-        "• [Key step or architectural mechanic 2]\n"
-        "• [Key step or architectural mechanic 3]\n\n"
-        "WHY\n"
-        "• [Primary benefit or architectural trade-off]\n"
-        "• [Why this choice over alternatives]\n\n"
-        "KEY POINT\n"
-        "[Memorable 1-sentence takeaway or project metric]"
+        "Deliver the exact, direct spoken answer with zero meta-headers (do NOT write 'ANSWER:', 'APPROACH:', 'WHY:', 'KEY POINT:').\n"
+        "1. Start immediately with a clear, confident 1-2 sentence spoken direct answer.\n"
+        "2. Follow with 2-4 scannable bullet points using bold lead-ins for key mechanisms and choices (`• **Key Step / Architecture**: detail`, `• **Trade-off / Why**: choice vs alternatives`).\n"
+        "3. Conclude with a punchy 1-sentence wrap-up."
     ),
     "coding": (
-        "CODING INTERVIEW STRATEGY:\n"
-        "Format with scannable uppercase section titles:\n"
-        "APPROACH\n"
-        "[Core intuition, algorithm logic, data structure choice, and trade-offs]\n\n"
-        "CODE\n"
-        "```python\n"
-        "[Clean, idiomatic, fully working code with helpful comments]\n"
-        "```\n\n"
-        "COMPLEXITY\n"
-        "Time: O(...) with brief derivation\n"
-        "Space: O(...) auxiliary memory\n\n"
-        "EDGE CASES\n"
-        "• Empty input / null checks\n"
-        "• Duplicate values or negative numbers\n"
-        "• Single element / boundary constraints"
+        "CODING INTERVIEW STRATEGY (MANDATORY COMPLETE CODE BLOCK):\n"
+        "1. Spoken Approach: Start with a brief 1-2 sentence spoken explanation of the algorithmic intuition.\n"
+        "2. Complexity: Provide the exact Big-O on its own line: `• **Complexity**: Time: O(...) | Space: O(...)`.\n"
+        "3. Complete Production Code: Provide the complete, optimal, runnable code in a single ```<language> block (e.g. ```python, ```javascript, ```java, ```cpp, ```sql). Never omit the code block or provide only pseudo-code.\n"
+        "4. Candidate Spoken Talking Points & Edge Cases: 2-3 crisp bullet points with bold lead-ins for key mechanisms and edge cases."
     ),
     "coding_complexity": (
         "CODING COMPLEXITY ONLY STRATEGY:\n"
-        "The interviewer is asking exclusively about the Time and Space Complexity of the preceding code solution.\n"
-        "- DO NOT regenerate code or full algorithm from scratch.\n"
-        "COMPLEXITY\n"
-        "Time: O(...) - [1 sentence mathematical breakdown]\n"
-        "Space: O(...) - [Auxiliary memory breakdown]\n\n"
-        "KEY POINT\n"
-        "[Bottleneck operation or memory trade-off]"
+        "State the exact Time and Space complexity in 1-2 direct spoken sentences with Big-O notation (`• **Complexity**: Time: O(...) | Space: O(...)`) and the dominant operation."
     ),
     "coding_optimization": (
         "CODING OPTIMIZATION STRATEGY:\n"
-        "The interviewer asked to optimize the previous solution.\n"
-        "APPROACH\n"
-        "[Identify previous bottleneck (e.g. O(N^2) brute force) and present the optimized approach (e.g. O(N) Hash Map / Two Pointers)]\n\n"
-        "CODE\n"
-        "```python\n"
-        "[Clean, optimized production code]\n"
-        "```\n\n"
-        "COMPLEXITY\n"
-        "Time: O(...) (improved from previous version)\n"
-        "Space: O(...)\n\n"
-        "TRADE-OFFS\n"
-        "[Time-space trade-offs of the optimized approach]"
+        "1. State the optimization intuition in 1 sentence.\n"
+        "2. Provide the improved Big-O: `• **Complexity**: Time: O(...) | Space: O(...)`.\n"
+        "3. Provide the optimized ```<language> code block.\n"
+        "4. State why this is faster/more memory efficient."
+    ),
+    "pseudocode": (
+        "PSEUDOCODE STRATEGY:\n"
+        "1. Spoken Intuition: 1 brief sentence summarizing the strategy.\n"
+        "2. Complete Algorithmic Pseudocode Block: Provide clean, language-agnostic step-by-step pseudocode in a ```text block with meaningful variable names and clear logic.\n"
+        "3. State Time & Space Complexity Big-O on its own line: `• **Complexity**: Time: O(...) | Space: O(...)`."
+    ),
+    "code_explanation": (
+        "CODE EXPLANATION STRATEGY:\n"
+        "Deliver a crisp, spoken first-person walkthrough of the code solution without repeating full raw code:\n"
+        "1. High-Level Strategy: 1-2 spoken sentences explaining the core algorithmic approach and data structures chosen.\n"
+        "2. Step-by-Step Logic: 2-3 clean bullet points explaining the primary loop/recursion, state transitions, and edge case handling.\n"
+        "3. Complexity Justification: 1 sentence confirming why this approach achieves optimal Time and Space complexity."
     ),
     "debugging": (
         "DEBUGGING & CODE REVIEW STRATEGY:\n"
-        "Format with clear scannable sections:\n"
-        "PROBLEM\n"
-        "[State exact bug/error and line location]\n\n"
-        "CAUSE\n"
-        "[Explain the root cause / logical flaw / edge case failure]\n\n"
-        "FIX\n"
-        "```python\n"
-        "[Clean, corrected code]\n"
-        "```\n\n"
-        "WHY\n"
-        "[Why this fix resolves the issue and prevents regressions]"
+        "1. Directly state the bug and root cause in 1-2 sentences.\n"
+        "2. Provide the corrected ```<language> code block.\n"
+        "3. Briefly explain why this fix resolves the issue."
     ),
     "sql": (
         "SQL QUERY STRATEGY:\n"
-        "Format with scannable sections:\n"
-        "SQL\n"
-        "```sql\n"
-        "[Optimized SQL query with Window Functions, CTEs, or JOINs]\n"
-        "```\n\n"
-        "EXPLANATION\n"
-        "• [Step 1: clause evaluation]\n"
-        "• [Step 2: window partition / filtering logic]\n\n"
-        "COMPLEXITY / PERFORMANCE\n"
-        "[Recommended indexes (e.g. B-Tree on target column) and execution considerations]"
+        "1. Brief 1-sentence spoken explanation of the query approach.\n"
+        "2. Provide the Big-O / Execution complexity if applicable.\n"
+        "3. Clean, production-ready ```sql query.\n"
+        "4. Key performance considerations or indexing recommendation (`• **Indexing**: ...`)."
     ),
     "behavioral": (
         "BEHAVIORAL (STAR) STRATEGY:\n"
-        "Format strictly in conversational STAR format:\n"
-        "SITUATION\n"
-        "[Brief 1-2 sentence context, project, and stake]\n\n"
-        "TASK\n"
-        "[What specific engineering/leadership responsibility fell on me]\n\n"
-        "ACTION\n"
-        "• [Specific action 1: architectural or technical decision taken]\n"
-        "• [Specific action 2: implementation / collaboration]\n\n"
-        "RESULT\n"
-        "[Quantifiable outcome, metric improvement, or positive team impact]"
+        "Deliver the direct spoken story in first-person without writing 'SITUATION:', 'TASK:', 'ACTION:', 'RESULT:'.\n"
+        "Structure as a natural narrative:\n"
+        "• **Context & Challenge**: [1-2 sentences setting the real scenario and stake]\n"
+        "• **My Actions**: [2-3 concrete technical/leadership actions taken]\n"
+        "• **Outcome & Impact**: [Quantifiable metric improvement and final result]"
     ),
     "project": (
         "PROJECT STRATEGY:\n"
         "Grounded strictly in verified candidate facts:\n"
-        "ANSWER\n"
-        "• Project: [Verified Project Name]\n"
-        "• Stack: [Verified Technologies]\n"
-        "• Purpose: [Core objective]\n"
-        "• Key Feature: [Main feature implemented]\n"
-        "• My Role: [Responsibility]\n\n"
-        "HOW IT WORKED\n"
-        "1. [Workflow step 1]\n"
-        "2. [Workflow step 2]\n"
-        "3. [Workflow step 3]\n\n"
-        "RESULT\n"
-        "[Quantifiable metric or verified impact]"
+        "1. Direct 1-2 sentence spoken overview of the project and core objective.\n"
+        "2. 3-4 bullet points on the architecture, technical challenges solved, and key features (`• **Architecture / Stack**: ...`, `• **Key Implementation**: ...`).\n"
+        "3. Measurable impact or production metric."
     ),
     "system_design": (
         "SYSTEM DESIGN INTERVIEW STRATEGY:\n"
-        "REQUIREMENTS\n"
-        "• Functional: [Core APIs and user workflows]\n"
-        "• Non-Functional: [High availability, low latency <50ms, data consistency]\n\n"
-        "ARCHITECTURE\n"
-        "Client -> CDN -> Load Balancer -> API Gateway -> Microservices -> DB / Cache\n\n"
-        "COMPONENTS\n"
-        "• Ingestion / API Layer: [Stateless services]\n"
-        "• Storage & Cache: [SQL/NoSQL database + Redis caching]\n"
-        "• Asynchronous Pipeline: [Kafka / RabbitMQ event stream]\n\n"
-        "SCALABILITY\n"
-        "• Horizontal auto-scaling, database read-replicas, and table sharding\n\n"
-        "TRADE-OFFS\n"
-        "• [CAP trade-offs, consistency vs availability]"
+        "1. Direct 1-2 sentence high-level architecture hook.\n"
+        "2. Core components in clean bullets (`• **API / Ingestion Layer**: ...`, `• **Storage & Caching**: ...`, `• **Event Streaming**: ...`).\n"
+        "3. Scalability, high-availability, and trade-offs in 2-3 concise bullets."
     ),
     "system_design_component": (
         "SYSTEM DESIGN COMPONENT DEEP-DIVE STRATEGY:\n"
-        "ANSWER\n"
-        "[Direct explanation of the component implementation within active architecture]\n\n"
-        "APPROACH\n"
-        "• [Implementation detail 1]\n"
-        "• [Implementation detail 2]\n\n"
-        "TRADE-OFFS\n"
-        "[Failure modes, backpressure, or cache eviction trade-offs]"
+        "Direct spoken explanation of how that specific component operates, failure modes, and trade-offs in 3-4 clean bullet points."
     ),
     "database": (
         "DATABASE STRATEGY:\n"
-        "ANSWER\n"
-        "[Direct schema/storage architecture answer]\n\n"
-        "APPROACH\n"
-        "• [Indexing strategy or schema normalization/denormalization]\n"
-        "• [Query optimization technique]\n\n"
-        "WHY\n"
-        "[Consistency vs latency and ACID compliance trade-offs]\n\n"
-        "KEY POINT\n"
-        "[Production performance takeaway]"
+        "Direct spoken response comparing schemas, indexing, ACID vs eventual consistency, and practical production trade-offs in 3-4 clean bullet points."
     ),
     "cloud": (
         "CLOUD & DEVOPS STRATEGY:\n"
-        "ANSWER\n"
-        "[Cloud architecture and infrastructure deployment answer]\n\n"
-        "APPROACH\n"
-        "• [Containerization / Kubernetes orchestration]\n"
-        "• [CI/CD automated pipeline]\n\n"
-        "KEY POINT\n"
-        "[High availability and infrastructure reliability]"
+        "Direct spoken explanation of the cloud architecture, CI/CD pipeline, container orchestration, and reliability in 3-4 clean bullet points."
     ),
     "ai_ml": (
         "AI / ML STRATEGY:\n"
-        "ANSWER\n"
-        "[Model architecture and machine learning intuition]\n\n"
-        "APPROACH\n"
-        "• [Data processing & training/fine-tuning approach]\n"
-        "• [Inference latency and deployment pipeline]\n\n"
-        "KEY POINT\n"
-        "[Evaluation metrics and production reliability]"
+        "Direct spoken response explaining model architecture, training/fine-tuning pipelines, inference latency, and evaluation in 3-4 clean bullet points."
     ),
     "resume": (
         "RESUME / INTRODUCTORY STRATEGY:\n"
-        "Deliver a natural, spoken 3–5 sentence intro (~60–100 words) in first-person.\n"
-        "1. Current role / education background.\n"
-        "2. Key technical skills (mention top 3–4 relevant technologies only, do not dump full resume).\n"
-        "3. Core project or practical experience.\n"
-        "4. What role you are looking forward to.\n"
-        "Speak conversationally as a real person. Do NOT output headings, planning notes, or bullet points."
+        "Deliver a natural, spoken 3–5 sentence intro in first-person (~60–100 words) covering current role, top 3 technical strengths, key project highlight, and enthusiasm."
     ),
     "hr": (
         "HR & BEHAVIORAL STRATEGY:\n"

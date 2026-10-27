@@ -10,7 +10,6 @@ regardless of which window currently has OS focus (Zoom, Teams, Meet, VS Code, B
 import os
 import sys
 import json
-import time
 import ctypes
 from ctypes import wintypes
 import threading
@@ -49,7 +48,9 @@ DEFAULT_HOTKEYS = {
     "solve_screen": "Ctrl+Alt+S",
     "mute_ai": "Ctrl+Alt+M",
     "regenerate": "Ctrl+Alt+R",
-    "cycle_opacity": "Ctrl+Alt+T"
+    "cycle_opacity": "Ctrl+Alt+T",
+    "ghost_mode": "Ctrl+Alt+G",
+    "dock_camera": "Ctrl+Alt+C"
 }
 
 

@@ -6,9 +6,7 @@ from sqlalchemy import (
     Integer,
     DateTime,
     ForeignKey,
-    Text,
-    Boolean,
-    Index
+    Text
 )
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -48,8 +46,7 @@ class User(Base):
         if self.subscription_tier in ["admin", "lifetime_free", "vip"]:
             return True
 
-        admin_raw = getattr(settings, "ADMIN_EMAILS", "") or ""
-        admin_list = [e.strip().lower() for e in admin_raw.split(",") if e.strip()]
+        admin_list = getattr(settings, "admin_emails_list", [])
         if "*" in admin_list or (self.email and self.email.lower() in admin_list):
             return True
 

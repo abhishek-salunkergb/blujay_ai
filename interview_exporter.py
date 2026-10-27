@@ -5,11 +5,8 @@ Exports live interview sessions into structured Markdown (.md), JSON (.json),
 and formatted PDF/HTML reports for post-interview debriefs and preparation.
 """
 
-import os
 import json
-import time
 from datetime import datetime
-from typing import Dict, Any, Optional
 
 from interview_engine import InterviewSession
 
@@ -17,20 +14,22 @@ from interview_engine import InterviewSession
 def generate_session_markdown(session: InterviewSession) -> str:
     """Generates structured Markdown report from an InterviewSession."""
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    role_str = session.job_title or "Software Engineering"
-    company_str = session.company_name or "Tech Company"
+    role_str = getattr(session, "job_title", "") or "Software Engineering"
+    company_str = getattr(session, "company_name", "") or "Tech Company"
     qa_list = getattr(session, "qa_pairs", []) or []
+    audio_src = getattr(session, "audio_source", "dual") or "dual"
+    session_sum = getattr(session, "session_summary", None) or "Session completed successfully. Review detailed Q&A transcripts below."
     
     md_lines = [
         f"# 🎙️ Interview Debrief Report - {role_str} @ {company_str}",
         f"**Date Generated:** {now_str}  ",
-        f"**Session Mode:** {session.audio_source.title()} Audio Capture  ",
+        f"**Session Mode:** {audio_src.title()} Audio Capture  ",
         f"**Total Questions Handled:** {len(qa_list)}  ",
         "",
         "---",
         "",
         "## 📊 Executive Summary & Performance Insights",
-        session.session_summary or "Session completed successfully. Review detailed Q&A transcripts below.",
+        session_sum,
         "",
         "---",
         "",
@@ -71,12 +70,12 @@ def export_session_to_markdown(session: InterviewSession, output_path: str) -> s
 def export_session_to_json(session: InterviewSession, output_path: str) -> str:
     """Exports complete raw session data to a structured JSON file."""
     data = {
-        "job_title": session.job_title,
-        "company_name": session.company_name,
-        "job_description": session.job_description,
-        "audio_source": session.audio_source,
+        "job_title": getattr(session, "job_title", ""),
+        "company_name": getattr(session, "company_name", ""),
+        "job_description": getattr(session, "job_description", ""),
+        "audio_source": getattr(session, "audio_source", "dual"),
         "timestamp": datetime.now().isoformat(),
-        "session_summary": session.session_summary,
+        "session_summary": getattr(session, "session_summary", None),
         "qa_pairs": getattr(session, "qa_pairs", []),
         "raw_transcript_lines": getattr(session, "transcript_lines", [])
     }

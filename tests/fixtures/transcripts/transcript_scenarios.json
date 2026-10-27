@@ -1,0 +1,33 @@
+{
+  "interim_sequence": [
+    {
+      "type": "interim",
+      "text": "What is",
+      "time": 0.1
+    },
+    {
+      "type": "interim",
+      "text": "What is Django",
+      "time": 0.3
+    },
+    {
+      "type": "final",
+      "text": "What is Django?",
+      "time": 0.5
+    }
+  ],
+  "overlapping_pair": {
+    "prev": "Why did you choose PostgreSQL",
+    "new": "PostgreSQL for your database?",
+    "expected_merge": "Why did you choose PostgreSQL for your database?"
+  },
+  "duplicate_sequence": [
+    "Write a function to invert a binary tree.",
+    "Write a function to invert a binary tree.",
+    "write a function to invert a binary tree?"
+  ],
+  "interviewer_candidate_turn": {
+    "interviewer": "What is Django?",
+    "candidate": "Django is a Python web framework."
+  }
+}

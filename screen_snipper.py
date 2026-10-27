@@ -10,7 +10,7 @@ import os
 import tempfile
 import tkinter as tk
 from typing import Callable, Optional, Tuple
-from PIL import Image, ImageGrab
+from PIL import ImageGrab
 
 
 class InteractiveRegionSnipper:
@@ -26,6 +26,7 @@ class InteractiveRegionSnipper:
         self.start_x: Optional[int] = None
         self.start_y: Optional[int] = None
         self.rect_id: Optional[int] = None
+        self.dim_text_id: Optional[int] = None
         
         # Build fullscreen snip window
         self.win = tk.Toplevel(root)
@@ -34,11 +35,39 @@ class InteractiveRegionSnipper:
         self.win.configure(bg="#000000")
         self.win.overrideredirect(True)
         
-        # Span across screen
+        # Span across virtual screen (all connected monitors)
+        screen_x, screen_y = 0, 0
         screen_w = root.winfo_screenwidth()
         screen_h = root.winfo_screenheight()
-        self.win.geometry(f"{screen_w}x{screen_h}+0+0")
+        if os.name == "nt":
+            try:
+                import ctypes
+                u32 = ctypes.windll.user32
+                vx = u32.GetSystemMetrics(76)  # SM_XVIRTUALSCREEN
+                vy = u32.GetSystemMetrics(77)  # SM_YVIRTUALSCREEN
+                vw = u32.GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+                vh = u32.GetSystemMetrics(79)  # SM_CYVIRTUALSCREEN
+                if vw > 0 and vh > 0:
+                    screen_x, screen_y, screen_w, screen_h = vx, vy, vw, vh
+            except Exception:
+                pass
+
+        self.win.geometry(f"{screen_w}x{screen_h}+{screen_x}+{screen_y}")
         self.win.config(cursor="cross")
+
+        # Apply OS-level capture exclusion (WDA_EXCLUDEFROMCAPTURE = 0x11) so snipper is invisible to screen shares
+        if os.name == "nt":
+            self.win.update_idletasks()
+            try:
+                import ctypes
+                from ctypes import wintypes
+                u32 = ctypes.windll.user32
+                w_id = self.win.winfo_id()
+                parent_hwnd = u32.GetParent(w_id)
+                target_hwnd = parent_hwnd if parent_hwnd else w_id
+                u32.SetWindowDisplayAffinity(wintypes.HWND(target_hwnd), wintypes.DWORD(0x11))
+            except Exception:
+                pass
 
         self.canvas = tk.Canvas(
             self.win,
@@ -73,6 +102,9 @@ class InteractiveRegionSnipper:
         cy = event.y
         if self.rect_id:
             self.canvas.delete(self.rect_id)
+        if self.dim_text_id:
+            self.canvas.delete(self.dim_text_id)
+            self.dim_text_id = None
         self.rect_id = self.canvas.create_rectangle(
             cx, cy, cx, cy,
             outline="#38bdf8",
@@ -92,6 +124,24 @@ class InteractiveRegionSnipper:
         start_cy = self.start_y - self.win.winfo_rooty()
         
         self.canvas.coords(self.rect_id, start_cx, start_cy, cur_cx, cur_cy)
+        
+        # Live HUD badge
+        w_px = abs(cur_cx - start_cx)
+        h_px = abs(cur_cy - start_cy)
+        dim_str = f" {w_px} × {h_px} px "
+        badge_x = max(start_cx, cur_cx) - 40
+        badge_y = max(start_cy, cur_cy) + 16
+        
+        if not self.dim_text_id:
+            self.dim_text_id = self.canvas.create_text(
+                badge_x, badge_y,
+                text=dim_str,
+                fill="#38bdf8",
+                font=("Segoe UI", 10, "bold")
+            )
+        else:
+            self.canvas.coords(self.dim_text_id, badge_x, badge_y)
+            self.canvas.itemconfig(self.dim_text_id, text=dim_str)
 
     def _on_release(self, event):
         if self.start_x is None or self.start_y is None:
@@ -113,8 +163,8 @@ class InteractiveRegionSnipper:
         self._close()
         
         if w >= 20 and h >= 20:
-            # Short sleep to allow the overlay window to completely disappear from desktop
-            self.parent_root.after(80, lambda: self._capture_and_dispatch((x1, y1, x2, y2)))
+            # Dispatch capture promptly
+            self.parent_root.after(15, lambda: self._capture_and_dispatch((x1, y1, x2, y2)))
         else:
             if self.on_cancel:
                 self.on_cancel()
@@ -122,12 +172,16 @@ class InteractiveRegionSnipper:
     def _capture_and_dispatch(self, bbox: Tuple[int, int, int, int]):
         try:
             try:
-                screenshot = ImageGrab.grab(bbox=bbox, all_screens=True)
+                from vision import capture_screen_image as vision_capture
+                temp_path = vision_capture(bbox=bbox)
             except Exception:
-                screenshot = ImageGrab.grab(bbox=bbox)
-                
-            temp_path = os.path.join(tempfile.gettempdir(), f"interview_snip_{os.getpid()}.png")
-            screenshot.save(temp_path, format="PNG")
+                try:
+                    screenshot = ImageGrab.grab(bbox=bbox, all_screens=True)
+                except Exception:
+                    screenshot = ImageGrab.grab(bbox=bbox)
+                    
+                temp_path = os.path.join(tempfile.gettempdir(), f"interview_snip_{os.getpid()}.png")
+                screenshot.save(temp_path, format="PNG")
             self.on_snip_completed(temp_path)
         except Exception as e:
             print(f"Error capturing region snip: {e}")

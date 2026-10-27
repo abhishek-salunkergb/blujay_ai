@@ -134,25 +134,29 @@ Return a valid JSON object strictly matching this schema:
 }}
 Only return valid JSON. Do not include markdown code fence formatting or explanations.
 """
-    try:
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=900
-        )
-        content = completion.choices[0].message.content.strip()
-        # Strip potential markdown formatting if returned
-        content = re.sub(r"^```json\s*", "", content)
-        content = re.sub(r"^```\s*", "", content)
-        content = re.sub(r"\s*```$", "", content)
-        data = json.loads(content)
-        
-        # Validate keys
-        if "match_score" in data and "matched_skills" in data:
-            return data
-    except Exception as e:
-        print(f"Notice during LLM JD analysis: {e}")
+    primary_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    models_to_try = [primary_model, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    models_to_try = list(dict.fromkeys(models_to_try))
+    for model_name in models_to_try:
+        try:
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                max_tokens=900
+            )
+            content = completion.choices[0].message.content.strip()
+            # Strip potential markdown formatting if returned
+            content = re.sub(r"^```json\s*", "", content)
+            content = re.sub(r"^```\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
+            data = json.loads(content)
+            
+            # Validate keys
+            if "match_score" in data and "matched_skills" in data:
+                return data
+        except Exception as e:
+            continue
         
     return heuristic_jd_match(jd_text, resume_text)
 

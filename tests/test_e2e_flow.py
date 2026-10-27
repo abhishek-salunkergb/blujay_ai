@@ -71,6 +71,7 @@ def test_full_system_e2e_flow():
     assert len(txs) >= 4  # session_start, session_extension, purchase, session_start
 
     print("SUCCESS: FULL SYSTEM E2E TEST PASSED 100%!")
+    client.close()
 
 
 if __name__ == "__main__":

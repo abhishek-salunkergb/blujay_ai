@@ -30,7 +30,7 @@ HEADER_REGEX = re.compile(
     re.IGNORECASE
 )
 
-# Syntax Highlighting Keyword sets
+# Multi-Language Syntax Highlighting Keyword sets
 PYTHON_KEYWORDS = {
     "def", "class", "return", "if", "else", "elif", "for", "in", "while",
     "break", "continue", "import", "from", "as", "try", "except", "finally",
@@ -39,10 +39,61 @@ PYTHON_KEYWORDS = {
     "or", "not", "is"
 }
 
+JAVASCRIPT_KEYWORDS = {
+    "const", "let", "var", "function", "return", "if", "else", "for", "while",
+    "do", "break", "continue", "import", "export", "default", "from", "as",
+    "try", "catch", "finally", "throw", "async", "await", "class", "extends",
+    "new", "this", "super", "null", "undefined", "true", "false", "typeof",
+    "instanceof", "in", "of", "yield", "interface", "type", "enum", "implements"
+}
+
+JAVA_KEYWORDS = {
+    "public", "private", "protected", "class", "interface", "enum", "extends",
+    "implements", "static", "final", "abstract", "synchronized", "volatile",
+    "transient", "native", "void", "return", "if", "else", "for", "while",
+    "do", "break", "continue", "switch", "case", "default", "try", "catch",
+    "finally", "throw", "throws", "new", "this", "super", "null", "true",
+    "false", "instanceof", "package", "import", "boolean", "byte", "char",
+    "short", "int", "long", "float", "double"
+}
+
+CPP_KEYWORDS = {
+    "auto", "bool", "char", "int", "float", "double", "void", "long", "short",
+    "unsigned", "signed", "class", "struct", "enum", "union", "template",
+    "typename", "namespace", "using", "public", "private", "protected",
+    "virtual", "override", "final", "const", "constexpr", "static", "inline",
+    "nullptr", "new", "delete", "this", "return", "if", "else", "for", "while",
+    "do", "break", "continue", "switch", "case", "default", "try", "catch",
+    "throw", "sizeof", "typedef", "include"
+}
+
+SQL_KEYWORDS = {
+    "select", "from", "where", "group", "by", "order", "having", "join",
+    "inner", "left", "right", "full", "outer", "on", "as", "insert", "into",
+    "values", "update", "set", "delete", "create", "table", "alter", "drop",
+    "index", "view", "with", "union", "all", "distinct", "limit", "offset",
+    "in", "between", "like", "is", "null", "not", "and", "or", "case", "when",
+    "then", "end", "asc", "desc", "over", "partition"
+}
+
 BUILTIN_FUNCS = {
     "len", "range", "enumerate", "min", "max", "sum", "zip", "dict",
     "list", "set", "tuple", "str", "int", "float", "bool", "print",
-    "sorted", "map", "filter", "any", "all", "abs", "round", "reversed"
+    "sorted", "map", "filter", "any", "all", "abs", "round", "reversed",
+    "push", "pop", "shift", "unshift", "splice", "slice", "forEach",
+    "indexOf", "includes", "substring", "charAt", "split", "join", "console",
+    "Math", "Array", "Object", "String", "Number", "Boolean", "Promise",
+    "System", "out", "println", "Integer", "Double", "Collections", "Arrays",
+    "HashMap", "HashSet", "ArrayList", "LinkedList", "Stack", "Queue", "PriorityQueue",
+    "vector", "string", "map", "unordered_map", "set", "unordered_set", "pair",
+    "cout", "cin", "endl", "std", "make_pair", "push_back", "emplace_back"
+}
+
+TYPE_NAMES = {
+    "List", "Dict", "Set", "Tuple", "Optional", "Union", "Any", "Callable",
+    "TreeNode", "ListNode", "Node", "Vector", "Matrix", "Iterator", "Iterable",
+    "String", "Integer", "Boolean", "Double", "Float", "Long", "Character",
+    "vector", "string", "size_t", "int64_t", "uint64_t"
 }
 
 
@@ -101,7 +152,7 @@ def parse_structured_answer(raw_answer: str, question_type: str = "general") -> 
                     "language": current_code_lang,
                     "type": "code"
                 })
-                current_title = "COMPLEXITY" if "CODING" in question_type.upper() else "EXPLANATION"
+                current_title = "TALKING_POINTS" if "CODING" in question_type.upper() else "EXPLANATION"
             continue
 
         if in_code_block:
@@ -109,7 +160,7 @@ def parse_structured_answer(raw_answer: str, question_type: str = "general") -> 
             continue
 
         # Check for Big-O Complexity extraction
-        t_match = re.search(r"\bTime(?:\s*Complexity)?\s*:\s*(O\([^\)]+\)[^\n]*)", line, re.IGNORECASE)
+        t_match = re.search(r"\bTime(?:\s*Complexity)?\s*:\s*(O\([^\)]+\)[^\n\|]*)", line, re.IGNORECASE)
         if t_match:
             time_comp = t_match.group(1).strip()
         s_match = re.search(r"\bSpace(?:\s*Complexity)?\s*:\s*(O\([^\)]+\)[^\n]*)", line, re.IGNORECASE)
@@ -158,6 +209,45 @@ def parse_structured_answer(raw_answer: str, question_type: str = "general") -> 
     }
 
 
+def extract_pure_code_snippet(raw_answer: str) -> str:
+    """
+    Extracts strictly the raw, executable code lines from markdown code blocks
+    in the generated answer, preserving exact indentation without any markdown
+    fences, headers, or spoken paragraphs.
+    """
+    if not raw_answer:
+        return ""
+    
+    code_blocks = re.findall(r"```(?:[a-zA-Z0-9_\+\#-]*)\n?([\s\S]*?)```", raw_answer)
+    if code_blocks:
+        # Return optimal/primary code block cleanly
+        return "\n\n".join(cb.strip("\n") for cb in code_blocks)
+    
+    # Fallback if no fence is found but answer is pure code
+    return raw_answer.strip()
+
+
+def extract_complexity_badges(raw_answer: str) -> Dict[str, str]:
+    """
+    Extracts standardized Time and Space complexity from an answer string.
+    Returns: {"time": "O(...)", "space": "O(...)"}
+    """
+    time_comp = ""
+    space_comp = ""
+    if not raw_answer:
+        return {"time": "", "space": ""}
+
+    t_match = re.search(r"\bTime(?:\s*Complexity)?\s*:\s*(O\([^\)]+\)[^\n\|]*)", raw_answer, re.IGNORECASE)
+    if t_match:
+        time_comp = t_match.group(1).strip()
+
+    s_match = re.search(r"\bSpace(?:\s*Complexity)?\s*:\s*(O\([^\)]+\)[^\n]*)", raw_answer, re.IGNORECASE)
+    if s_match:
+        space_comp = s_match.group(1).strip()
+
+    return {"time": time_comp, "space": space_comp}
+
+
 def _detect_section_type(title: str, content: str) -> str:
     """Classifies a section into text, bullets, key_point, or code."""
     t_up = title.upper()
@@ -172,17 +262,44 @@ def _detect_section_type(title: str, content: str) -> str:
     return "text"
 
 
-def highlight_code_tokens(code_str: str) -> List[Tuple[str, str]]:
+def highlight_code_tokens(code_str: str, language: str = "python") -> List[Tuple[str, str]]:
     """
-    Tokenizes code and assigns tags:
-    ('code_kw', 'code_builtin', 'code_str', 'code_num', 'code_comment', 'code_body')
+    Universal multi-language tokenizer supporting Python, Java, JS/TS, C++, and SQL.
+    Assigns tags: ('code_kw', 'code_builtin', 'code_str', 'code_num', 'code_comment', 'code_ident', 'code_body')
     """
     tokens = []
+    lang = (language or "python").lower()
+
+    # Select active keyword set based on language
+    if lang in ("javascript", "js", "typescript", "ts", "jsx", "tsx"):
+        keywords = JAVASCRIPT_KEYWORDS
+        comment_chars = ["//"]
+    elif lang in ("java", "kotlin", "scala"):
+        keywords = JAVA_KEYWORDS
+        comment_chars = ["//"]
+    elif lang in ("c++", "cpp", "c", "csharp", "cs"):
+        keywords = CPP_KEYWORDS
+        comment_chars = ["//"]
+    elif lang in ("sql", "postgresql", "mysql", "sqlite"):
+        keywords = SQL_KEYWORDS
+        comment_chars = ["--"]
+    else:
+        keywords = PYTHON_KEYWORDS
+        comment_chars = ["#"]
+
     lines = code_str.split("\n")
 
     for line_idx, line in enumerate(lines):
-        # 1. Handle Comment
-        comment_idx = line.find("#")
+        # 1. Handle Comments (support #, //, --)
+        comment_idx = -1
+        active_comment_char = ""
+        for c_char in comment_chars + ["#", "//", "--"]:
+            idx = line.find(c_char)
+            if idx != -1:
+                if comment_idx == -1 or idx < comment_idx:
+                    comment_idx = idx
+                    active_comment_char = c_char
+
         comment_part = ""
         code_part = line
         if comment_idx != -1:
@@ -190,17 +307,20 @@ def highlight_code_tokens(code_str: str) -> List[Tuple[str, str]]:
             comment_part = line[comment_idx:]
 
         # 2. Tokenize code part with regex for strings, keywords, words, numbers, symbols
-        pattern = re.compile(r'("(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|\b[A-Za-z_]\w*\b|\b\d+\b|[^\w\s]|\s+)')
+        pattern = re.compile(r'("(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|`(?:\\.|[^`\\])*`|\b[A-Za-z_]\w*\b|\b\d+\b|[^\w\s]|\s+)')
         matches = pattern.findall(code_part)
 
         for token in matches:
             if not token:
                 continue
-            if token.startswith(('"', "'")):
+            token_lower = token.lower()
+            if token.startswith(('"', "'", "`")):
                 tokens.append((token, "code_str"))
-            elif token in PYTHON_KEYWORDS:
+            elif token in keywords or token_lower in keywords:
                 tokens.append((token, "code_kw"))
-            elif token in BUILTIN_FUNCS:
+            elif token in BUILTIN_FUNCS or token_lower in BUILTIN_FUNCS:
+                tokens.append((token, "code_builtin"))
+            elif token in TYPE_NAMES:
                 tokens.append((token, "code_builtin"))
             elif token.isdigit():
                 tokens.append((token, "code_num"))
@@ -244,8 +364,7 @@ def render_structured_answer_to_text_widget(
 ) -> None:
     """
     Renders a structured, styled interview answer with syntax-highlighted code blocks,
-    bullet points (Time/Space complexity), and solution containers.
-    For conversational / HR / Resume questions, renders natural spoken text without rigid section headers.
+    top-level Time/Space complexity badges, and clear conversational hierarchy.
     """
     try:
         text_widget.delete("1.0", "end")
@@ -254,6 +373,9 @@ def render_structured_answer_to_text_widget(
         parsed = parse_structured_answer(raw_answer, question_type=q_type)
         sections = parsed.get("sections", [])
         code_blocks = parsed.get("code_blocks", [])
+        complexity = parsed.get("complexity", {})
+        time_comp = complexity.get("time", "")
+        space_comp = complexity.get("space", "")
         
         # Pure conversational rendering if HR/Resume/Behavioral/General and no code
         if q_type in ("hr", "resume", "behavioral", "general", "tell_me_about_yourself") and not code_blocks:
@@ -267,24 +389,35 @@ def render_structured_answer_to_text_widget(
             text_widget.see("1.0")
             return
 
+        # Top Big-O Complexity Banner if complexity exists
+        if time_comp or space_comp:
+            text_widget.insert("end", "⏱️ ", "bullet_symbol")
+            if time_comp:
+                text_widget.insert("end", f"Time: {time_comp}   ", "complexity_time_tag")
+            if space_comp:
+                text_widget.insert("end", "💾 ", "bullet_symbol")
+                text_widget.insert("end", f"Space: {space_comp}", "complexity_space_tag")
+            text_widget.insert("end", "\n\n")
+
         for idx, sec in enumerate(sections):
             title = sec.get("title", "")
             content = sec.get("content", "").strip()
             sec_type = sec.get("type", "text")
+            sec_lang = sec.get("language", "python")
 
-            # 1. Complexity / Bullet Points (e.g. • Time: O(...), • Space: O(...))
+            # 1. Complexity / Bullet Points
             if sec_type == "bullets" or "COMPLEXITY" in title.upper():
                 lines = content.split("\n")
                 for l in lines:
                     l_clean = l.strip()
                     if not l_clean:
                         continue
-                    if not l_clean.startswith(("•", "-", "*", "1.", "2.")):
+                    if not l_clean.startswith(("•", "-", "*", "1.", "2.", "🗎")):
                         l_clean = f"• {l_clean}"
                     else:
                         l_clean = re.sub(r"^[\-\*]\s*", "• ", l_clean)
 
-                    # Highlight Time/Space in bold cyan/amber
+                    # Highlight Time/Space in bold cyan/amber if encountered inline
                     if "Time:" in l_clean or "Time Complexity:" in l_clean:
                         text_widget.insert("end", "• ", "bullet_symbol")
                         text_widget.insert("end", "Time: ", "complexity_time_tag")
@@ -296,22 +429,32 @@ def render_structured_answer_to_text_widget(
                         rem = re.sub(r"^•\s*Space(?:\s*Complexity)?:\s*", "", l_clean)
                         text_widget.insert("end", f"{rem}\n", "bullet_body")
                     else:
-                        text_widget.insert("end", f"{l_clean}\n", "bullet_body")
+                        b_match = re.match(r"^([•🗎]\s*)([^:\n]+:)\s*(.*)$", l_clean)
+                        if b_match:
+                            b_icon = b_match.group(1)
+                            b_title = b_match.group(2)
+                            b_rest = b_match.group(3)
+                            text_widget.insert("end", b_icon, "bullet_symbol")
+                            text_widget.insert("end", f"{b_title} ", "heading")
+                            text_widget.insert("end", f"{b_rest}\n", "bullet_body")
+                        else:
+                            text_widget.insert("end", f"{l_clean}\n", "bullet_body")
                 text_widget.insert("end", "\n")
                 continue
 
-            # 2. Code / Solution Block
+            # 2. Code / Solution Block (with language tag and universal highlighting)
             if sec_type == "code" or title.upper() in {"CODE", "SOLUTION"}:
-                text_widget.insert("end", "\n🌄 Solution:\n", "solution_header")
-                tokens = highlight_code_tokens(content)
+                lang_display = f" [{sec_lang.upper()}]" if sec_lang and sec_lang != "python" else ""
+                text_widget.insert("end", f"\n💻 Solution{lang_display}:\n", "solution_header")
+                tokens = highlight_code_tokens(content, language=sec_lang)
                 text_widget.insert("end", "\n", "code_body")
                 for text, tag in tokens:
                     text_widget.insert("end", text, tag)
                 text_widget.insert("end", "\n\n", "code_body")
                 continue
 
-            # 3. Standard Section Headers (Skip for pure single-section or conversational answers)
-            if title and not (title in ["ANSWER", "GENERAL"] and (len(sections) <= 2 or q_type in ["hr", "resume", "general"])):
+            # 3. Standard Section Headers
+            if title and not (title in ["ANSWER", "GENERAL", "TALKING_POINTS"] and (len(sections) <= 2 or q_type in ["hr", "resume", "general"])):
                 header_display = f"✦ {title.upper()}\n"
                 tag_name = "key_header" if sec_type == "key_point" else "section_header"
                 text_widget.insert("end", header_display, tag_name)
@@ -320,7 +463,23 @@ def render_structured_answer_to_text_widget(
             if sec_type == "key_point":
                 text_widget.insert("end", f"💡 {content}\n\n", "key_body")
             else:
-                text_widget.insert("end", f"{content}\n\n", "body")
+                sec_lines = content.split("\n")
+                for s_line in sec_lines:
+                    s_clean = s_line.strip()
+                    if not s_clean:
+                        text_widget.insert("end", "\n", "body")
+                        continue
+                    b_match = re.match(r"^([•🗎\-\*]\s*)([^:\n]+:)\s*(.*)$", s_clean)
+                    if b_match:
+                        b_icon = "• " if b_match.group(1).strip() in ["-", "*", "•"] else b_match.group(1)
+                        b_title = b_match.group(2)
+                        b_rest = b_match.group(3)
+                        text_widget.insert("end", b_icon, "bullet_symbol")
+                        text_widget.insert("end", f"{b_title} ", "heading")
+                        text_widget.insert("end", f"{b_rest}\n", "bullet_body")
+                    else:
+                        text_widget.insert("end", f"{s_line}\n", "body")
+                text_widget.insert("end", "\n")
 
         text_widget.see("1.0")
 
@@ -330,3 +489,4 @@ def render_structured_answer_to_text_widget(
             text_widget.insert("end", raw_answer, "body")
         except Exception:
             pass
+

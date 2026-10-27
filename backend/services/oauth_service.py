@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database.models import User
-from backend.services.auth_service import create_access_token, create_refresh_token, hash_password
+from backend.services.auth_service import hash_password
 
 
 class OAuthService:

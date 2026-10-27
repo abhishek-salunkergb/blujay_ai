@@ -1,0 +1,37 @@
+# =============================================================================
+# BluJay AI - Render Free Cloud Deployment Blueprint
+# =============================================================================
+# Deploys the FastAPI server and managed PostgreSQL database on Render Free Tier.
+# Automatically generates HTTPS public URL: https://<your-app>.onrender.com
+# =============================================================================
+
+services:
+  - type: web
+    name: blujay-ai-backend
+    runtime: python
+    buildCommand: pip install -r requirements-server.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blujay-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DEFAULT_CURRENCY
+        value: usd
+
+databases:
+  - name: blujay-db
+    databaseName: blujay_db
+    user: blujay
+    plan: free
+    region: oregon

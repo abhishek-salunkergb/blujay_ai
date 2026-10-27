@@ -13,10 +13,10 @@ import os
 import json
 import time
 import urllib.request
-import urllib.error
-from typing import Dict, Any, List, Optional, Callable, Tuple
+from typing import List, Optional, Callable, Tuple
 
-OFFLINE_CONFIG_FILE = os.path.expanduser("~/.ai_copilot_provider.json")
+OFFLINE_CONFIG_FILE = os.getenv("BLUJAY_PROVIDER_PATH", os.path.expanduser("~/.blujay_provider.json"))
+LEGACY_OFFLINE_CONFIG_FILE = os.path.expanduser("~/.ai_copilot_provider.json")
 DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
 
 
@@ -93,6 +93,36 @@ def stream_ollama_response(
     return full_text
 
 
+def stream_gemini_response(
+    prompt: str,
+    system_prompt: str = "",
+    on_token: Optional[Callable[[str], None]] = None,
+    is_cancelled: Optional[Callable[[], bool]] = None
+) -> str:
+    """
+    Streams response from Google Gemini 3.6 Flash fallback provider.
+    """
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        return ""
+    try:
+        from google import genai
+        client = genai.Client(api_key=gemini_key)
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+        resp = client.models.generate_content(
+            model=os.getenv("GEMINI_MODEL", "gemini-flash-latest"),
+            contents=full_prompt
+        )
+        if resp and resp.text:
+            ans = resp.text
+            if on_token:
+                on_token(ans)
+            return ans
+    except Exception as ge:
+        print(f"Notice: Gemini stream error: {ge}")
+    return ""
+
+
 def generate_offline_heuristic_answer(
     question: str,
     job_title: str = "Software Engineer",
@@ -109,8 +139,16 @@ def generate_offline_heuristic_answer(
     matched_context = ""
     if resume_text:
         lines = [l.strip() for l in resume_text.splitlines() if len(l.strip()) > 20]
-        if lines:
-            matched_context = f"\nRelevant Background: {lines[0]}"
+        relevant_line = ""
+        for line in lines:
+            ll = line.lower()
+            if any(k in ll for k in ["built", "developed", "architected", "implemented", "engineered", "designed", "created", "stack", "python", "fastapi", "react", "sql"]):
+                relevant_line = line
+                break
+        if not relevant_line and lines:
+            relevant_line = lines[0]
+        if relevant_line:
+            matched_context = f"\nRelevant Background: {relevant_line}"
     
     # 1. System Design question
     if any(k in q_lower for k in ["design", "architecture", "scale", "throughput", "sharding", "microservices"]):
@@ -123,11 +161,19 @@ For designing this system as a {job_title}{company_clause}:
 """
     # 2. Behavioral STAR question
     elif any(k in q_lower for k in ["tell me about a time", "conflict", "challenge", "failure", "leadership", "proud"]):
-        ans = f"""[Offline Synthesis - Behavioral STAR]
-• Situation: In my previous role as a {job_title}{company_clause}, our team faced a critical project milestone with tight deadlines and high technical ambiguity.
-• Task: My responsibility was to own the core service architecture and align cross-functional stakeholders.
-• Action: I broke the initiative into phased deliverables, introduced automated testing, and proactively conducted design reviews.
-• Result: We delivered the feature on schedule with zero production regressions and a 30% reduction in latency.{matched_context}
+        if resume_text:
+            ans = f"""[Offline Synthesis - Behavioral STAR]
+• Situation: In my verified background as a {job_title}{company_clause}, our team handled core platform delivery requirements.
+• Task: I owned the implementation and ensured alignment with project goals.
+• Action: I broke the initiative into phased deliverables, introduced automated testing, and proactively conducted code reviews.{matched_context}
+• Result: Delivered the feature reliably and maintained high code quality.
+"""
+        else:
+            ans = f"""[Offline Synthesis - Behavioral STAR Framework]
+• Situation: Structure your response around a real project challenge from your engineering background.
+• Task: Clearly articulate your direct responsibility and technical ownership.
+• Action: Detail the specific technical decisions, debugging steps, and collaboration you performed.
+• Result: State the concrete, measurable outcome and lessons learned without unconfirmed claims.
 """
     # 3. Technical / General Engineering question
     else:
@@ -135,7 +181,7 @@ For designing this system as a {job_title}{company_clause}:
 In approaching '{question}' for the {job_title} role{company_clause}:
 1. Core Concept: Focus on the fundamental trade-offs between computational complexity, maintainability, and reliability.
 2. Best Practices: Leverage standard design patterns, strict type-safety, robust error handling, and end-to-end integration tests.
-3. Real-world Experience: In production environments, prioritize observable metrics (latency, error rates) and modular decoupled architecture.{matched_context}
+3. Architecture: Prioritize observable metrics (latency, error rates) and clean modular structure.{matched_context}
 """
 
     ans = ans.strip()
@@ -179,13 +225,14 @@ class OfflineFallbackManager:
         return status
 
     def _load_preference(self) -> str:
-        if os.path.exists(OFFLINE_CONFIG_FILE):
-            try:
-                with open(OFFLINE_CONFIG_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    return data.get("preferred_provider", "auto")
-            except Exception:
-                pass
+        for p in (OFFLINE_CONFIG_FILE, LEGACY_OFFLINE_CONFIG_FILE):
+            if os.path.exists(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        return data.get("preferred_provider", "auto")
+                except Exception:
+                    pass
         return "auto"
 
     def _save_preference(self):

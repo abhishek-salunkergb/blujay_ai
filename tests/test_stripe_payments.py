@@ -78,6 +78,7 @@ class TestStripePayments(unittest.TestCase):
         self.db.query(User).delete()
         self.db.commit()
         self.db.close()
+        self.client.close()
 
     def test_01_multicurrency_catalog(self):
         """Verify catalog returns correct currency symbols and prices."""

@@ -5,12 +5,57 @@ Provides safe, isolated, and bounded subprocess code execution for Python and Ja
 to verify algorithm solutions, test cases, and edge cases live during technical coding rounds.
 """
 
-import os
 import re
 import sys
+import ast
 import time
 import subprocess
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Tuple
+
+RESTRICTED_SANDBOX_MODULES = {
+    "os", "subprocess", "shutil", "socket", "pty",
+    "ctypes", "posix", "nt", "winreg", "msvcrt", "signal"
+}
+
+RESTRICTED_SANDBOX_CALLS = {
+    "remove", "unlink", "rmdir", "rmtree", "system", "popen",
+    "spawn", "kill", "terminate"
+}
+
+
+def validate_code_safety(code: str, language: str = "python") -> Tuple[bool, str]:
+    """
+    Statically analyzes code to disallow execution of dangerous system-level calls
+    and destructive filesystem modifications inside the interview sandbox.
+    """
+    lang = language.lower()
+    if lang in ["python", "py", "python3"]:
+        try:
+            tree = ast.parse(code)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        base_mod = alias.name.split(".")[0].lower()
+                        if base_mod in RESTRICTED_SANDBOX_MODULES:
+                            return False, f"Sandbox Security Violation: import of '{base_mod}' is restricted."
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        base_mod = node.module.split(".")[0].lower()
+                        if base_mod in RESTRICTED_SANDBOX_MODULES:
+                            return False, f"Sandbox Security Violation: import from '{base_mod}' is restricted."
+                elif isinstance(node, ast.Call):
+                    if isinstance(node.func, ast.Name):
+                        if node.func.id in RESTRICTED_SANDBOX_CALLS:
+                            return False, f"Sandbox Security Violation: call to '{node.func.id}()' is restricted."
+                    elif isinstance(node.func, ast.Attribute):
+                        if node.func.attr in RESTRICTED_SANDBOX_CALLS:
+                            return False, f"Sandbox Security Violation: call to '.{node.func.attr}()' is restricted."
+        except SyntaxError:
+            pass
+        except Exception:
+            pass
+
+    return True, ""
 
 
 def extract_code_from_markdown(text: str) -> List[Dict[str, str]]:
@@ -40,6 +85,17 @@ def execute_code_snippet(
     """
     Executes a code snippet in an isolated subprocess with bounded CPU timeout.
     """
+    is_safe, violation_msg = validate_code_safety(code, language)
+    if not is_safe:
+        return {
+            "success": False,
+            "stdout": "",
+            "stderr": violation_msg,
+            "returncode": -1,
+            "duration_sec": 0.0,
+            "timed_out": False
+        }
+
     lang = language.lower()
     start_time = time.perf_counter()
 

@@ -9,7 +9,7 @@ and behavioral interview rounds.
 import os
 import re
 import json
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from groq import Groq
 
 STAR_STORIES_STORAGE_FILE = os.path.expanduser("~/.ai_copilot_star_stories.json")
@@ -101,22 +101,30 @@ Return a valid JSON list of objects matching this exact schema:
 ]
 Only return valid JSON without markdown code fences.
 """
-    try:
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=1500
-        )
-        content = completion.choices[0].message.content.strip()
-        content = re.sub(r"^```json\s*", "", content)
-        content = re.sub(r"^```\s*", "", content)
-        content = re.sub(r"\s*```$", "", content)
-        stories = json.loads(content)
-        if isinstance(stories, list) and len(stories) > 0 and "situation" in stories[0]:
-            return stories
-    except Exception as e:
-        print(f"Notice during LLM STAR extraction: {e}")
+    models_to_try = [
+        os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        "llama-3.3-70b-versatile",
+        os.getenv("FAST_GROQ_MODEL", "llama-3.1-8b-instant"),
+        "llama-3.1-8b-instant"
+    ]
+    models_to_try = list(dict.fromkeys(models_to_try))
+    for model_name in models_to_try:
+        try:
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                max_tokens=1500
+            )
+            content = completion.choices[0].message.content.strip()
+            content = re.sub(r"^```json\s*", "", content)
+            content = re.sub(r"^```\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
+            stories = json.loads(content)
+            if isinstance(stories, list) and len(stories) > 0 and "situation" in stories[0]:
+                return stories
+        except Exception as e:
+            continue
 
     return extract_star_stories_heuristic(resume_text)
 
@@ -187,6 +195,24 @@ Category: {cat}
 {lrn}
 """
     return formatted.strip()
+
+
+def format_star_natural_spoken_answer(question: str, story: Dict[str, Any]) -> str:
+    """Formats a STAR story into a natural, teleprompter-ready conversational response without rigid meta-headers."""
+    sit = story.get("situation", "").strip()
+    act = story.get("action", "").strip()
+    res = story.get("result", "").strip()
+    lrn = story.get("key_learnings", "").strip()
+
+    spoken = (
+        f"{sit} "
+        f"{act} "
+        f"{res}"
+    )
+    if lrn:
+        prefix = lrn[0].lower() + lrn[1:] if len(lrn) > 1 else lrn
+        spoken += f" Looking back, {prefix}"
+    return spoken.strip()
 
 
 def load_star_stories_from_disk() -> List[Dict[str, Any]]:

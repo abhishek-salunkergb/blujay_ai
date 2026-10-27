@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✦ BluJay AI - Live Interview Copilot</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="glass-body">
+  <div id="hud-app" class="hud-app">
+
+    <!-- ================================================================= -->
+    <!-- 1. TOP FLOATING CAPSULE HEADER                                    -->
+    <!-- ================================================================= -->
+    <header class="capsule-header pywebview-drag-region">
+      
+      <!-- Left: Logo & Controls -->
+      <div class="capsule-left">
+        <div class="brand-badge" title="BluJay AI">
+          <div class="mascot-emblem-small">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mascot-svg-small">
+              <rect width="24" height="24" rx="6" fill="#84cc16"/>
+              <path d="M5.5 13.5C5.5 8 8.5 4.5 13 4.5C17 4.5 18.5 7.5 18.5 11C18.5 15 16 19 11.5 19C8 19 5.5 16.5 5.5 13.5Z" fill="#65a30d"/>
+              <path d="M5.5 13.5C5.5 8.5 8 5.5 11.5 5.5C14.5 5.5 16.5 8 16.5 11C16.5 14.5 14 18 10 18C7.5 18 5.5 16 5.5 13.5Z" fill="#84cc16"/>
+              <path d="M15.5 10L21 11.5L15.5 14V10Z" fill="#f59e0b"/>
+              <circle cx="12.5" cy="9" r="2.8" fill="#ffffff"/>
+              <circle cx="13.2" cy="8.7" r="1.3" fill="#0f172a"/>
+              <circle cx="13.8" cy="8.2" r="0.5" fill="#ffffff"/>
+              <path d="M8 13C7.5 14.5 9 16 11 16" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="brand-name">BluJay AI</span>
+        </div>
+        <button id="btn-hide" class="pill-btn" onclick="minimizeToBubble()">Hide</button>
+        <button id="btn-more-menu" class="pill-btn icon-only" title="More options" onclick="toggleMoreMenu(event)">···</button>
+      </div>
+
+      <!-- Center: Timer, Audio Health Visualizer & Status Badge -->
+      <div class="capsule-center pywebview-drag-region">
+        <div id="timer-badge" class="session-timer-badge">
+          <span class="timer-dot"></span>
+          <span id="timer-text">1 min (Active)</span>
+        </div>
+
+        <!-- Real-Time Dual Audio Health Visualizer -->
+        <div id="audio-health-visualizer" class="audio-health-visualizer" title="Real-Time Audio Stream Activity (Mic & System Audio)">
+          <!-- System Audio Loopback (Interviewer Voice) -->
+          <div class="audio-stream-pill system-stream" title="Interviewer Voice (Speaker Loopback)">
+            <span class="audio-stream-icon">🔊</span>
+            <div class="audio-wave-bars" id="system-wave-bars">
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+            </div>
+          </div>
+          <!-- Microphone (Your Voice) -->
+          <div class="audio-stream-pill mic-stream" title="Your Voice (Microphone)">
+            <span class="audio-stream-icon">🎙️</span>
+            <div class="audio-wave-bars" id="mic-wave-bars">
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Stealth, STT, Close & Drawer -->
+      <div class="capsule-right">
+        <div id="stealth-badge" class="stealth-badge-pill" title="Screen Capture Protected (Invisible to Zoom/Meet/Teams)">
+          <span class="screen-icon">🖥️</span>
+          <span id="rec-dot" class="rec-dot"></span>
+        </div>
+        <button id="btn-stt-toggle" class="stt-pill-btn active" title="Toggle Speech-to-Text" onclick="toggleSpeechTranscription()">
+          <span id="stt-text">Start</span>
+          <span class="mic-icon">🎙️</span>
+        </button>
+        <button id="btn-close-app" class="close-pill-btn" title="Close Overlay" onclick="closeApp()">✕</button>
+        <button id="btn-drawer" class="pill-btn icon-only" title="Drawer menu" onclick="toggleDrawer()">≡</button>
+        <button id="btn-clear" class="pill-btn" title="Clear transcript" onclick="clearTranscript()">Clear</button>
+      </div>
+    </header>
+
+    <!-- ================================================================= -->
+    <!-- 2. LIVE SPEECH SUBTITLE STRIP                                     -->
+    <!-- ================================================================= -->
+    <div class="live-subtitle-strip pywebview-drag-region">
+      <p id="live-subtitle-text" class="live-subtitle-text">Listening for speech...</p>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 3. TOP ACTION MODE BAR                                            -->
+    <!-- ================================================================= -->
+    <nav class="action-mode-bar">
+      <button id="btn-ai-answer" class="mode-action-pill active" onclick="manualGenerateAnswer()">
+        <span class="sparkle-icon">✦</span> AI Answer
+      </button>
+
+      <button id="btn-analyse-screen" class="mode-action-pill" onclick="triggerAnalyseScreen()">
+        Analyse Screen
+      </button>
+
+      <div class="manual-input-wrapper">
+        <input 
+          type="text" 
+          id="manual-input-field" 
+          class="manual-input-field" 
+          placeholder="Type a manual message..." 
+          autocomplete="off"
+          onkeydown="handleManualInputKeyDown(event)"
+        />
+        <button id="btn-send-manual" class="btn-send" onclick="submitManualQuestion()">Send</button>
+      </div>
+    </nav>
+
+    <!-- ================================================================= -->
+    <!-- 4. EXPANDING FROSTED GLASS QA CARD                                -->
+    <!-- ================================================================= -->
+    <main id="glass-qa-card" class="glass-qa-card hidden">
+      
+      <!-- Card Top Navigation & Actions Bar -->
+      <div class="card-top-bar">
+        <div class="history-nav-controls">
+          <button id="btn-prev-q" class="nav-arrow-btn" title="Previous Question (&lt;)" onclick="navHistory(-1)">&lt;</button>
+          <button id="btn-next-q" class="nav-arrow-btn" title="Next Question (&gt;)" onclick="navHistory(1)">&gt;</button>
+          <span id="history-counter" class="history-counter">1/1</span>
+        </div>
+
+        <div class="card-right-actions">
+          <button id="btn-copy-ans" class="pill-btn copy-btn" title="Copy Answer (Alt + K)" onclick="copyAnswer()">📋 Copy</button>
+          <button id="btn-dismiss-card" class="card-dismiss-btn" title="Dismiss Answer Card" onclick="dismissAnswerCard()">✕</button>
+        </div>
+      </div>
+
+      <!-- Scrollable QA Content Body -->
+      <div id="qa-scroll-body" class="qa-scroll-body">
+        
+        <!-- Summarized Question -->
+        <div class="question-row">
+          <p class="question-line">
+            <span class="q-label">💬 Summarized question:</span>
+            <span id="question-text" class="q-text">Interviewer question will appear here...</span>
+          </p>
+        </div>
+
+        <!-- Answer Section -->
+        <div class="answer-section">
+          <div class="ans-header-row">
+            <span class="ans-label">⭐ Answer:</span>
+            <span id="generation-status" class="generation-status"></span>
+          </div>
+
+          <div id="answer-content" class="answer-content">
+            <!-- Progressively streamed, syntax-highlighted tokens -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Fast Refinement Toolbar -->
+      <footer class="card-bottom-toolbar">
+        <button class="refine-pill" onclick="refineAnswer('30s Short', 'Make this response concise, punchy, and under 60 words.')">⚡ 30s</button>
+        <button class="refine-pill" onclick="refineAnswer('STAR Method', 'Structure strictly in conversational STAR format with clear impact.')">🎯 STAR</button>
+        <button class="refine-pill" onclick="refineAnswer('Deep Tech', 'Add deeper technical architecture, trade-offs, and internals.')">🛠️ Deep Tech</button>
+        <button class="refine-pill" onclick="triggerSystemDesign()">🏛️ Sys Design</button>
+        <button class="refine-pill" onclick="triggerStarStory()">🌟 STAR Story</button>
+        <button class="refine-pill" onclick="triggerRunCode()">▶️ Run Code</button>
+        <button class="refine-pill" onclick="triggerTeleprompter()">📜 Teleprompter</button>
+      </footer>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- 5. MORE POPUP MENU                                                -->
+    <!-- ================================================================= -->
+    <div id="more-popup-menu" class="more-popup-menu hidden">
+      <div class="menu-item" onclick="triggerRegionSnip()">
+        <span class="menu-icon">✂️</span>
+        <span>Snip Screen Region (Ctrl + Shift + Enter)</span>
+      </div>
+      <div class="menu-item" onclick="triggerTeleprompter()">
+        <span class="menu-icon">📜</span>
+        <span>Toggle Teleprompter (Alt + T)</span>
+      </div>
+      <div class="menu-item" onclick="openModal('modal-shortcuts')">
+        <span class="menu-icon">⌨</span>
+        <span>Keyboard Shortcuts</span>
+      </div>
+      <div class="menu-item" onclick="openModal('modal-settings')">
+        <span class="menu-icon">⚙️</span>
+        <span>Job & Resume Settings</span>
+      </div>
+      <div class="menu-item" onclick="exportSessionReport()">
+        <span class="menu-icon">📄</span>
+        <span>Export Session Report</span>
+      </div>
+      <div class="menu-divider"></div>
+      <div class="menu-item danger" onclick="endSession()">
+        <span class="menu-icon">🏁</span>
+        <span>End Session</span>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 6. SETTINGS MODAL                                                 -->
+    <!-- ================================================================= -->
+    <div id="modal-settings" class="modal-backdrop hidden" onclick="handleBackdropClick(event, 'modal-settings')">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>⚙️ Job & Session Settings</h3>
+          <button class="modal-close-btn" onclick="closeModal('modal-settings')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Target Company</label>
+            <input type="text" id="settings-company" class="modal-input" placeholder="e.g. Google, Stripe, Meta">
+          </div>
+          <div class="form-group">
+            <label>Target Role / Job Description</label>
+            <textarea id="settings-jd" class="modal-textarea" rows="3" placeholder="Paste job description or requirements..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Custom Instructions</label>
+            <input type="text" id="settings-instructions" class="modal-input" placeholder="e.g. Focus on Python 3.12, keep answers under 2 mins">
+          </div>
+          <div class="form-group">
+            <label>AI Answer Model</label>
+            <select id="settings-model" class="modal-input" style="background:#1e293b; color:#fff;">
+              <option value="gpt-4o-mini" selected>OpenAI GPT-4o Mini (Ultra-Fast & Smart)</option>
+              <option value="gpt-4o">OpenAI GPT-4o (Flagship Coding & Reasoning)</option>
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq)</option>
+              <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Live Audio Capture Mode</label>
+            <select id="settings-audio-source" class="modal-input" style="background:#1e293b; color:#fff;">
+              <option value="dual" selected>🎙️ Dual Loop (Interviewer Loopback + Candidate Mic)</option>
+              <option value="system">🔊 System Audio Only (Interviewer Speaker Loopback)</option>
+              <option value="mic">🎤 Microphone Only (Candidate Voice)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeModal('modal-settings')">Cancel</button>
+          <button class="btn-primary" onclick="saveSettings()">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 7. SHORTCUTS MODAL                                                -->
+    <!-- ================================================================= -->
+    <div id="modal-shortcuts" class="modal-backdrop hidden" onclick="handleBackdropClick(event, 'modal-shortcuts')">
+      <div class="modal-card modal-card-wide">
+        <div class="modal-header">
+          <h3>⌨ Keyboard Shortcuts & Global Hotkeys</h3>
+          <button class="modal-close-btn" onclick="closeModal('modal-shortcuts')">✕</button>
+        </div>
+        <div class="modal-body shortcuts-list-scrollable">
+          
+          <!-- Category 1: Global System Hotkeys -->
+          <div class="sc-category">
+            <h4 class="sc-category-title">🌐 Global OS Hotkeys <span class="sc-badge-note">(Works in Zoom, Meet, Teams, VS Code)</span></h4>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>H</kbd></span>
+              <span class="sc-desc"><strong>Panic Hide / Restore:</strong> Shrink to floating 🐦 app icon bubble or restore full HUD</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd></span>
+              <span class="sc-desc"><strong>Solve Screen Code:</strong> Instant screen capture & AI vision problem solver</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>M</kbd></span>
+              <span class="sc-desc"><strong>Mute / Unmute STT:</strong> Toggle live speech-to-text audio capture</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>R</kbd></span>
+              <span class="sc-desc"><strong>Regenerate Answer:</strong> Generate fresh answer for the latest question</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>P</kbd></span>
+              <span class="sc-desc"><strong>Teleprompter:</strong> Toggle smooth auto-scrolling teleprompter</span>
+            </div>
+          </div>
+
+          <!-- Category 2: In-App Copilot Controls -->
+          <div class="sc-category">
+            <h4 class="sc-category-title">⚡ In-App Copilot Controls</h4>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+              <span class="sc-desc"><strong>Generate AI Answer:</strong> Immediately trigger answer generation</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd></span>
+              <span class="sc-desc"><strong>Analyse Screen Problem:</strong> Capture and analyze screen region</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>Backspace</kbd></span>
+              <span class="sc-desc"><strong>Clear & Reset:</strong> Clear live transcript and reset answer card</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Alt</kbd> + <kbd>K</kbd></span>
+              <span class="sc-desc"><strong>Copy Answer:</strong> Copy formatted answer to system clipboard</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Alt</kbd> + <kbd>T</kbd></span>
+              <span class="sc-desc"><strong>Toggle Teleprompter:</strong> Start / pause reading auto-scroll</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-keys"><kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>→</kbd></span>
+              <span class="sc-desc"><strong>Question History:</strong> Navigate previous or next recorded question</span>
+            </div>
+          </div>
+
+          <!-- Category 3: Fast Answer Refinement Chips -->
+          <div class="sc-category">
+            <h4 class="sc-category-title">🎯 1-Click Fast Refinement Chips</h4>
+            <div class="sc-row">
+              <span class="sc-chip-preview">⚡ 30s</span>
+              <span class="sc-desc"><strong>30s Elevator Pitch:</strong> Concise, punchy answer under 60 words</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-chip-preview">🎯 STAR</span>
+              <span class="sc-desc"><strong>STAR Method:</strong> Situation, Task, Action, Result structure</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-chip-preview">🛠️ Deep Tech</span>
+              <span class="sc-desc"><strong>Deep Technical:</strong> Architectural trade-offs, scaling, and internals</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-chip-preview">🏛️ Sys Design</span>
+              <span class="sc-desc"><strong>System Design:</strong> High-scale distributed system breakdown</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-chip-preview">🌟 STAR Story</span>
+              <span class="sc-desc"><strong>Resume Story:</strong> Tailors past achievements to the question</span>
+            </div>
+            <div class="sc-row">
+              <span class="sc-chip-preview">▶️ Run Code</span>
+              <span class="sc-desc"><strong>Run Code:</strong> Execute snippet & test algorithm edge cases</span>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" onclick="closeModal('modal-shortcuts')">Got It</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- FLOATING APP ICON BUBBLE (Shown when HUD is hidden)              -->
+  <!-- ================================================================= -->
+  <div id="floating-app-bubble" class="floating-app-bubble hidden pywebview-drag-region" onclick="restoreFromBubble()" title="Click to restore BluJay AI">
+    <div class="bubble-icon-wrapper">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" class="bubble-svg">
+        <circle cx="12" cy="12" r="12" fill="#84cc16"/>
+        <path d="M5.5 13.5C5.5 8 8.5 4.5 13 4.5C17 4.5 18.5 7.5 18.5 11C18.5 15 16 19 11.5 19C8 19 5.5 16.5 5.5 13.5Z" fill="#65a30d"/>
+        <path d="M5.5 13.5C5.5 8.5 8 5.5 11.5 5.5C14.5 5.5 16.5 8 16.5 11C16.5 14.5 14 18 10 18C7.5 18 5.5 16 5.5 13.5Z" fill="#84cc16"/>
+        <path d="M15.5 10L21 11.5L15.5 14V10Z" fill="#f59e0b"/>
+        <circle cx="12.5" cy="9" r="2.8" fill="#ffffff"/>
+        <circle cx="13.2" cy="8.7" r="1.3" fill="#0f172a"/>
+        <circle cx="13.8" cy="8.2" r="0.5" fill="#ffffff"/>
+        <path d="M8 13C7.5 14.5 9 16 11 16" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span class="bubble-pulse-ring"></span>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="hud-toast" class="hud-toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

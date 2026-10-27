@@ -57,6 +57,7 @@ class TestOAuthPipeline(unittest.TestCase):
         self.db.query(User).delete()
         self.db.commit()
         self.db.close()
+        self.client.close()
 
     def test_01_google_authorize_url(self):
         """Verify Google authorize URL contains expected parameters."""
